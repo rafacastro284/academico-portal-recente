@@ -1,0 +1,94 @@
+.container {
+  width: 100%;
+}
+
+.backButton {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #e2e8f0;
+  color: #2d3748;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+}
+.backButton:hover {
+  background-color: #cbd5e0;
+}
+
+.title {
+  color: #333;
+  margin-bottom: 2rem;
+  margin-top: 0;
+}
+
+.filterBar {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-end;
+}
+
+.filterBar div {
+  display: flex;
+  flex-direction: column;
+}
+
+.filterBar label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.filterBar input,
+.filterBar select {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  min-width: 220px;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 1.25rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.table th {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.tagAtivo { background-color: #c6f6d5; color: #2f855a; }
+.tagInativo { background-color: #fecaca; color: #b91c1c; }
+.tagLicenca { background-color: #fee9d0; color: #f57c00; }

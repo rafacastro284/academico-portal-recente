@@ -1,0 +1,54 @@
+.container {
+  width: 100%;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.navGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.navCard {
+  background-color: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.navCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  border-color: #007bff;
+}
+
+.iconWrapper {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.navCard h3 {
+  margin: 0.5rem 0;
+  color: #007bff;
+}
+
+.navCard p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}

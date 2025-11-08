@@ -1,0 +1,64 @@
+.container {
+  width: 100%;
+}
+
+.title {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  font-size: 1.75rem;
+  margin-top: 0;
+  color: #1a237e;
+  border-bottom: 4px solid #1a237e;
+}
+
+.section {
+  margin-top: 2rem;
+}
+
+.section h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.iconWrapper {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.card h3 {
+  margin: 0.5rem 0;
+  color: #1a237e;
+}
+
+.card p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}

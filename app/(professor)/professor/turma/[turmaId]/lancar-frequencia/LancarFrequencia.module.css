@@ -1,0 +1,75 @@
+.filterBar {
+  display: flex;
+  justify-content: flex-start; 
+  align-items: flex-end; 
+  gap: 1.5rem;
+  background-color: #f8fafc;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+.filterBar div {
+  display: flex;
+  flex-direction: column;
+}
+.filterBar label {
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+.filterBar input[type="date"] {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+  min-width: 150px;
+}
+
+.saveButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  margin-left: auto; 
+}
+.saveButton:hover { background-color: #0056b3; }
+
+
+.sectionTitle {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th, .table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+.table th {
+  background-color: #374151;
+  color: white;
+}
+
+.radioGroup {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+.radioLabel input[type="radio"] {
+  transform: scale(1.2); 
+}

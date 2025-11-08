@@ -1,0 +1,82 @@
+.container {
+  width: 100%;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.subtitle {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #666;
+}
+
+.turmaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.turmaCard {
+  background-color: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.turmaCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  border-color: #007bff;
+}
+
+.turmaCard h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #007bff;
+}
+
+.disciplina {
+  margin-bottom: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.turmaDetails {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto; 
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.turmaDetails div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.turmaDetails strong {
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.turmaDetails span {
+  font-size: 0.8rem;
+  color: #666;
+}

@@ -1,0 +1,93 @@
+.container {
+  width: 100%;
+}
+
+.backButton {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #e2e8f0;
+  color: #2d3748;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.backButton:hover {
+  background-color: #cbd5e0;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+  max-width: 500px;
+  margin: 0 auto; 
+}
+
+.formTitle {
+  font-size: 1.75rem;
+  font-weight: 600;
+  text-align: center;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 2rem;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.inputGroup input,
+.inputGroup select {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-sizing: border-box; 
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus {
+  outline: none;
+  border-color: #3f51b5; 
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+}
+
+.submitButton {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #3f51b5;
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+.submitButton:hover:not(:disabled) {
+  background-color: #303f9f; 
+  transform: translateY(-1px);
+}
+
+.successMessage {
+  text-align: center;
+  color: green;
+  font-weight: 500;
+  margin-top: 1rem;
+}

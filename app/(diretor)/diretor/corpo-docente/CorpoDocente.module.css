@@ -1,0 +1,57 @@
+.container { width: 100%; }
+
+.card {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #e2e8f0;
+  color: #2d3748;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.title { margin-top: 0; }
+.subtitle { margin-top: 0; }
+
+.filterBar {
+  display: flex;
+  gap: 2rem;
+  background-color: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+.filterBar div { display: flex; flex-direction: column; }
+.filterBar label { margin-bottom: 0.5rem; font-weight: 500; }
+.filterBar select { padding: 0.5rem; border-radius: 6px; border: 1px solid #cbd5e0; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th, .table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+.table th {
+  background-color: #374151;
+  color: white;
+}
+
+.ativo {
+  background-color: #c6f6d5;
+  color: #2f855a;
+  padding: 0.25rem 0.5rem;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
