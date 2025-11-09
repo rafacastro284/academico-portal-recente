@@ -23,7 +23,7 @@ export default function DisciplinaDetalhe() {
 
   return (
     <div className={styles.container}>
-      <Link href="/dashboard" className={styles.backButton}>
+      <Link href="/aluno/dashboard" className={styles.backButton}>
         &larr; Voltar para Disciplinas
       </Link>
       

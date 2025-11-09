@@ -7,6 +7,7 @@ const IconCadastrarTurma = () => <>➕</>;
 const IconDocumento = () => <>📄</>;
 const IconHorario = () => <>🗓️</>;
 const IconGerenciarTurmas = () => <>🏫</>; 
+const IconCadastrarUsuario = () => <>👤</>; 
 
 export default function SecretarioDashboard() {
   return (
@@ -58,6 +59,12 @@ export default function SecretarioDashboard() {
             <div className={styles.iconWrapper}><IconHorario /></div>
             <h3>Montar Grade Horária</h3>
             <p>Organizar os horários das turmas e professores</p>
+          </Link>
+          <Link href="/secretaria/cadastra-usuario" className={styles.navCard}>
+            {/* ... Cadastrar Usuário ... */}
+            <div className={styles.iconWrapper}><IconCadastrarUsuario /></div>
+            <h3>Cadastrar Usuário</h3>
+            <p>Cadastrar Usuários</p>
           </Link>
 
         </div>

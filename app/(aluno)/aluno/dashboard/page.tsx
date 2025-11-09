@@ -1,5 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { studentData } from '../../lib/mockData'; 
 import styles from './Home.module.css'; 
 
 const IconBook = () => <>📚</>;
@@ -7,30 +9,50 @@ const IconChart = () => <>📊</>;
 const IconCheck = () => <>✅</>;
 
 export default function Dashboard() {
-  const { name, matricula, turma, generalStats, disciplinas } = studentData;
+  const [usuario, setUsuario] = useState<any>(null);
+
+  useEffect(() => {
+    // 🔹 Lê os dados do usuário logado do localStorage
+    const dadosSalvos = localStorage.getItem('usuarioLogado');
+    if (dadosSalvos) {
+      setUsuario(JSON.parse(dadosSalvos));
+    } else {
+      // 🔸 Se não tiver usuário logado, redireciona pro login
+      window.location.href = '/login';
+    }
+  }, []);
+
+  if (!usuario) {
+    return <p className={styles.loading}>Carregando...</p>;
+  }
+
   return (
     <div className={styles.pageWrapper}>
-
       {/* --- Card Principal (Header e Resumo) --- */}
       <div className={styles.mainCard}>
         <header className={styles.header}>
           <div>
             <h1 className={styles.title}>Portal do Aluno</h1>
             <p className={styles.subtitle}>
-              Olá, <strong>{name}</strong> { }
-              { }
-              {turma !== "Turma não definida" && (
-                <span className={styles.badge}>{turma}</span>
+              Olá, <strong>{usuario.nome}</strong>{' '}
+              {usuario.turma && (
+                <span className={styles.badge}>{usuario.turma}</span>
               )}
             </p>
             <p className={styles.matricula}>
               <span className={styles.matriculaIcon}>🪪</span>
-              Matrícula: {matricula} {/* Vai mostrar "N/A" */}
+              CPF: {usuario.cpf}
             </p>
           </div>
-          <Link href="/login">
-            <button className={styles.logoutButton}>Sair</button>
-          </Link>
+          <button
+            className={styles.logoutButton}
+            onClick={() => {
+              localStorage.removeItem('usuarioLogado');
+              window.location.href = '/login';
+            }}
+          >
+            Sair
+          </button>
         </header>
 
         {/* --- Grid de Resumo Rápido --- */}
@@ -40,7 +62,7 @@ export default function Dashboard() {
               <IconBook />
             </div>
             <div>
-              <strong>{generalStats.disciplinas}</strong>
+              <strong>5</strong>
               <p>Disciplinas</p>
             </div>
           </div>
@@ -49,7 +71,7 @@ export default function Dashboard() {
               <IconChart />
             </div>
             <div>
-              <strong>{generalStats.mediaGeral}</strong>
+              <strong>8.6</strong>
               <p>Média Geral</p>
             </div>
           </div>
@@ -58,7 +80,7 @@ export default function Dashboard() {
               <IconCheck />
             </div>
             <div>
-              <strong>{generalStats.frequencia}%</strong>
+              <strong>92%</strong>
               <p>Frequência</p>
             </div>
           </div>
@@ -72,28 +94,26 @@ export default function Dashboard() {
           Clique em uma disciplina para ver suas notas e frequência
         </p>
 
+        {/* Exemplo temporário */}
         <div className={styles.disciplinasGrid}>
-          {disciplinas.map((disciplina) => (
-            // Cada card é um link para a página de detalhes
-            <Link href={`/disciplinas/${disciplina.id}`} key={disciplina.id} className={styles.subjectCardLink}>
-              <div className={styles.subjectCard}>
-                <div className={styles.subjectCardHeader}>
-                  <h3>{disciplina.name}</h3>
-                  <p>{disciplina.professor}</p>
+          <Link href="/disciplinas/1" className={styles.subjectCardLink}>
+            <div className={styles.subjectCard}>
+              <div className={styles.subjectCardHeader}>
+                <h3>Matemática</h3>
+                <p>Prof. João</p>
+              </div>
+              <div className={styles.subjectCardStats}>
+                <div>
+                  <span>8.5</span>
+                  <p>Nota Atual</p>
                 </div>
-                <div className={styles.subjectCardStats}>
-                  <div>
-                    <span>{disciplina.notaAtual}</span>
-                    <p>Nota Atual</p>
-                  </div>
-                  <div>
-                    <span>{disciplina.frequencia}%</span>
-                    <p>Frequência</p>
-                  </div>
+                <div>
+                  <span>95%</span>
+                  <p>Frequência</p>
                 </div>
               </div>
-            </Link>
-          ))}
+            </div>
+          </Link>
         </div>
       </div>
     </div>
