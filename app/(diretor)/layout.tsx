@@ -1,6 +1,8 @@
-import Link from 'next/link';
-import styles from './DiretorLayout.module.css';
-import { diretorData } from '../lib/mockData'; 
+"use client";
+
+import Link from "next/link";
+import styles from "./DiretorLayout.module.css";
+import { useEffect, useState } from "react";
 
 const IconAluno = () => <>👨‍🎓</>;
 const IconProfessor = () => <>👩‍🏫</>;
@@ -12,13 +14,54 @@ export default function DiretorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { header, summary } = diretorData;
+  const [header, setHeader] = useState({
+    nome: "Diretor",
+  });
+
+  const [summary, setSummary] = useState({
+    alunos: 0,
+    professores: 0,
+    turmas: 0,
+    mediaGeral: 0,
+  });
+
+  // ---- Buscar dados reais do backend ----
+  useEffect(() => {
+    async function loadData() {
+      try {
+        // Contagem de alunos
+        const alunosRes = await fetch("/api/diretor/total-alunos");
+        const alunosJson = await alunosRes.json();
+
+        // Contagem de professores
+        const profRes = await fetch("/api/diretor/total-professores");
+        const profJson = await profRes.json();
+
+        // Contagem de turmas
+        const turmasRes = await fetch("/api/diretor/total-turmas");
+        const turmasJson = await turmasRes.json();
+
+        // Média geral
+        const mediaRes = await fetch("/api/notas/media-geral");
+        const mediaJson = await mediaRes.json();
+
+        setSummary({
+          alunos: alunosJson.total ?? 0,
+          professores: profJson.total ?? 0,
+          turmas: turmasJson.total ?? 0,
+          mediaGeral: mediaJson.media ?? 0,
+        });
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error);
+      }
+    }
+
+    loadData();
+  }, []);
 
   return (
     <div className={styles.layoutWrapper}>
-      <header className={styles.header}>
-        { }
-      </header>
+      <header className={styles.header}></header>
 
       <main className={styles.mainContent}>
         {/* -- Card de Info do Diretor -- */}
@@ -30,7 +73,7 @@ export default function DiretorLayout({
             <button className={styles.logoutButton}>Sair</button>
           </Link>
         </div>
-        
+
         {/* -- Cards de Resumo Rápido -- */}
         <div className={styles.summaryGrid}>
           <div className={styles.summaryCard}>
@@ -40,6 +83,7 @@ export default function DiretorLayout({
               <p>Alunos</p>
             </div>
           </div>
+
           <div className={styles.summaryCard}>
             <div className={styles.iconWrapper}><IconProfessor /></div>
             <div>
@@ -47,6 +91,7 @@ export default function DiretorLayout({
               <p>Professores</p>
             </div>
           </div>
+
           <div className={styles.summaryCard}>
             <div className={styles.iconWrapper}><IconTurma /></div>
             <div>
@@ -54,6 +99,7 @@ export default function DiretorLayout({
               <p>Turmas</p>
             </div>
           </div>
+
           <div className={styles.summaryCard}>
             <div className={styles.iconWrapper}><IconMedia /></div>
             <div>
@@ -63,7 +109,6 @@ export default function DiretorLayout({
           </div>
         </div>
 
-        { }
         {children}
       </main>
 

@@ -9,14 +9,15 @@ export async function GET(
   try {
     const id = Number(params.id);
 
-    // Busca o aluno e suas disciplinas relacionadas
     const aluno = await prisma.usuario.findUnique({
       where: { idusuario: id },
       include: {
-        turma: true, // se houver relação 1:1
+        turma: true,
         disciplinas: {
           include: {
-            professor: true,
+            disciplina: {
+              include: { professor: true },
+            },
           },
         },
       },
@@ -35,3 +36,4 @@ export async function GET(
     );
   }
 }
+
