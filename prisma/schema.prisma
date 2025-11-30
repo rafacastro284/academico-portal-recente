@@ -11,8 +11,8 @@ model alunodisciplina {
   idalunodisciplina Int          @id @default(autoincrement())
   idaluno           Int
   iddisciplina      Int
-  usuario           usuario      @relation(fields: [idaluno], references: [idusuario], onDelete: NoAction, onUpdate: NoAction)
-  disciplina        disciplina   @relation(fields: [iddisciplina], references: [iddisciplina], onDelete: NoAction, onUpdate: NoAction)
+  usuario           usuario      @relation(fields: [idaluno], references: [idusuario])
+  disciplina        disciplina   @relation(fields: [iddisciplina], references: [iddisciplina])
   frequencia        frequencia[]
   nota              nota[]
 }
@@ -23,7 +23,7 @@ model disciplina {
   nome_disciplina String?           @db.VarChar(100)
   carga_horaria   Int?
   alunodisciplina alunodisciplina[]
-  usuario         usuario           @relation(fields: [idprofessor], references: [idusuario], onDelete: NoAction, onUpdate: NoAction)
+  usuario         usuario           @relation(fields: [idprofessor], references: [idusuario])
   tarefa          tarefa[]
 }
 
@@ -32,15 +32,18 @@ model frequencia {
   idalunodisciplina Int
   data              DateTime?       @db.Date
   faltas            Int?            @default(0)
-  alunodisciplina   alunodisciplina @relation(fields: [idalunodisciplina], references: [idalunodisciplina], onDelete: NoAction, onUpdate: NoAction)
+  alunodisciplina   alunodisciplina @relation(fields: [idalunodisciplina], references: [idalunodisciplina])
 }
 
-model matriculaturma {
-  idmatriculaturma Int     @id @default(autoincrement())
-  idusuario        Int
-  idturma          Int
-  turma            turma   @relation(fields: [idturma], references: [idturma], onDelete: NoAction, onUpdate: NoAction)
-  usuario          usuario @relation(fields: [idusuario], references: [idusuario], onDelete: NoAction, onUpdate: NoAction)
+model turma {
+  idturma        Int              @id @default(autoincrement())
+  nome_turma     String?          @db.VarChar(50)
+  ano_letivo     Int?
+  limite_vagas   Int?
+  serie          String?          @db.VarChar(50)   // opcional agora
+  turno          String?          @db.VarChar(30)   // opcional agora
+
+  matriculaturma matriculaturma[]
 }
 
 model nota {
@@ -49,7 +52,7 @@ model nota {
   descricao         String?         @db.VarChar(200)
   valor             Decimal?        @db.Decimal(5, 2)
   data              DateTime?       @db.Date
-  alunodisciplina   alunodisciplina @relation(fields: [idalunodisciplina], references: [idalunodisciplina], onDelete: NoAction, onUpdate: NoAction)
+  alunodisciplina   alunodisciplina @relation(fields: [idalunodisciplina], references: [idalunodisciplina])
 }
 
 model tarefa {
@@ -57,15 +60,16 @@ model tarefa {
   iddisciplina Int
   tipo         String?    @db.VarChar(50)
   descricao    String?
-  disciplina   disciplina @relation(fields: [iddisciplina], references: [iddisciplina], onDelete: NoAction, onUpdate: NoAction)
+  disciplina   disciplina @relation(fields: [iddisciplina], references: [iddisciplina])
 }
 
-model turma {
-  idturma        Int              @id @default(autoincrement())
-  nome_turma     String?          @db.VarChar(50)
-  ano_letivo     Int?
-  limite_vagas   Int?
-  matriculaturma matriculaturma[]
+model matriculaturma {
+  idmatriculaturma Int     @id @default(autoincrement())
+  idusuario        Int
+  idturma          Int
+
+  turma            turma   @relation(fields: [idturma], references: [idturma])
+  usuario          usuario @relation(fields: [idusuario], references: [idusuario])
 }
 
 model usuario {
@@ -80,7 +84,6 @@ model usuario {
   disciplina      disciplina[]
   matriculaturma  matriculaturma[]
 }
-
 
 enum tipo_usuario {
   aluno
