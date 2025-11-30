@@ -1,8 +1,11 @@
 'use client';
 
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './Home.module.css'; 
+
+
 
 const IconBook = () => <>📚</>;
 const IconChart = () => <>📊</>;
@@ -10,17 +13,29 @@ const IconCheck = () => <>✅</>;
 
 export default function Dashboard() {
   const [usuario, setUsuario] = useState<any>(null);
+  const [disciplinas, setDisciplinas] = useState<any[]>([]);
 
   useEffect(() => {
-    // 🔹 Lê os dados do usuário logado do localStorage
-    const dadosSalvos = localStorage.getItem('usuarioLogado');
-    if (dadosSalvos) {
-      setUsuario(JSON.parse(dadosSalvos));
-    } else {
-      // 🔸 Se não tiver usuário logado, redireciona pro login
-      window.location.href = '/login';
-    }
-  }, []);
+  const dadosSalvos = localStorage.getItem('usuarioLogado');
+  if (dadosSalvos) {
+    const user = JSON.parse(dadosSalvos);
+    setUsuario(user);
+
+    // 🔹 Buscar disciplinas reais
+    fetch("/api/aluno/disciplinas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idusuario: user.idusuario }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setDisciplinas(data.disciplinas || []);
+      });
+  } else {
+    window.location.href = '/login';
+  }
+}, []);
+
 
   if (!usuario) {
     return <p className={styles.loading}>Carregando...</p>;
@@ -94,27 +109,35 @@ export default function Dashboard() {
           Clique em uma disciplina para ver suas notas e frequência
         </p>
 
-        {/* Exemplo temporário */}
         <div className={styles.disciplinasGrid}>
-          <Link href="/disciplinas/1" className={styles.subjectCardLink}>
-            <div className={styles.subjectCard}>
-              <div className={styles.subjectCardHeader}>
-                <h3>Matemática</h3>
-                <p>Prof. João</p>
-              </div>
-              <div className={styles.subjectCardStats}>
-                <div>
-                  <span>8.5</span>
-                  <p>Nota Atual</p>
-                </div>
-                <div>
-                  <span>95%</span>
-                  <p>Frequência</p>
-                </div>
-              </div>
-            </div>
-          </Link>
+  {disciplinas.length === 0 && <p>Você não está matriculado em nenhuma disciplina.</p>}
+
+  {disciplinas.map((d) => (
+    <Link
+      key={d.idalunodisciplina}
+      href={`/disciplinas/${d.iddisciplina}`}
+      className={styles.subjectCardLink}
+    >
+      <div className={styles.subjectCard}>
+        <div className={styles.subjectCardHeader}>
+          <h3>{d.disciplina.nome_disciplina}</h3>
+          <p>Prof. {d.disciplina.usuario.nome}</p>
         </div>
+        <div className={styles.subjectCardStats}>
+          <div>
+            <span>-</span>
+            <p>Nota Atual</p>
+          </div>
+          <div>
+            <span>-</span>
+            <p>Frequência</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  ))}
+</div>
+
       </div>
     </div>
   );

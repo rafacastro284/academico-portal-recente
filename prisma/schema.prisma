@@ -7,80 +7,127 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//////////////////////////////
+//   RELACIONAMENTOS N:N    //
+//////////////////////////////
+model TurmaDisciplina {
+  id            Int @id @default(autoincrement())
+  turmaId       Int
+  disciplinaId  Int
+
+  turma        turma       @relation(fields: [turmaId], references: [idturma])
+  disciplina   disciplina  @relation(fields: [disciplinaId], references: [iddisciplina])
+
+  @@unique([turmaId, disciplinaId])   // evita dupla inserção
+}
+
+//////////////////////////////
+//     TABELAS PRINCIPAIS   //
+//////////////////////////////
+
+model usuario {
+  idusuario       Int                @id @default(autoincrement())
+  cpf             String?            @unique @db.VarChar(14)
+  matricula       String?            @db.VarChar(20)
+  nome            String?            @db.VarChar(100)
+  email           String?            @unique @db.VarChar(100)
+  senha           String?            @db.VarChar(255)
+  tipo            tipo_usuario
+
+  // relações
+  alunodisciplina alunodisciplina[]
+  disciplina      disciplina[]       // professor ministra várias disciplinas
+  matriculaturma  matriculaturma[]
+}
+
+
+model disciplina {
+  iddisciplina    Int                @id @default(autoincrement())
+  idprofessor     Int
+  nome_disciplina String?            @db.VarChar(100)
+  carga_horaria   Int?
+
+  // relações
+  professor       usuario            @relation(fields: [idprofessor], references: [idusuario])
+  alunodisciplina alunodisciplina[]
+  tarefa          tarefa[]
+  turmas          TurmaDisciplina[]  // 🔥 vincula disciplinas às turmas
+}
+
+
+model turma {
+  idturma         Int                @id @default(autoincrement())
+  nome_turma      String?            @db.VarChar(50)
+  ano_letivo      Int?
+  limite_vagas    Int?
+  serie           String?            @db.VarChar(50)
+  turno           String?            @db.VarChar(30)
+
+  // relações
+  matriculaturma  matriculaturma[]
+  disciplinas     TurmaDisciplina[]  // 🔥 vincula turmas às disciplinas
+}
+
+
+//////////////////////////////
+//     RELAÇÕES AUXILIARES  //
+//////////////////////////////
+
 model alunodisciplina {
-  idalunodisciplina Int          @id @default(autoincrement())
+  idalunodisciplina Int              @id @default(autoincrement())
   idaluno           Int
   iddisciplina      Int
-  usuario           usuario      @relation(fields: [idaluno], references: [idusuario], onDelete: NoAction, onUpdate: NoAction)
-  disciplina        disciplina   @relation(fields: [iddisciplina], references: [iddisciplina], onDelete: NoAction, onUpdate: NoAction)
+
+  usuario           usuario          @relation(fields: [idaluno], references: [idusuario])
+  disciplina        disciplina       @relation(fields: [iddisciplina], references: [iddisciplina])
   frequencia        frequencia[]
   nota              nota[]
 }
 
-model disciplina {
-  iddisciplina    Int               @id @default(autoincrement())
-  idprofessor     Int
-  nome_disciplina String?           @db.VarChar(100)
-  carga_horaria   Int?
-  alunodisciplina alunodisciplina[]
-  usuario         usuario           @relation(fields: [idprofessor], references: [idusuario], onDelete: NoAction, onUpdate: NoAction)
-  tarefa          tarefa[]
-}
 
 model frequencia {
-  idfrequencia      Int             @id @default(autoincrement())
+  idfrequencia      Int              @id @default(autoincrement())
   idalunodisciplina Int
-  data              DateTime?       @db.Date
-  faltas            Int?            @default(0)
-  alunodisciplina   alunodisciplina @relation(fields: [idalunodisciplina], references: [idalunodisciplina], onDelete: NoAction, onUpdate: NoAction)
+  data              DateTime?        @db.Date
+  faltas            Int?             @default(0)
+
+  alunodisciplina   alunodisciplina  @relation(fields: [idalunodisciplina], references: [idalunodisciplina])
 }
 
-model matriculaturma {
-  idmatriculaturma Int     @id @default(autoincrement())
-  idusuario        Int
-  idturma          Int
-  turma            turma   @relation(fields: [idturma], references: [idturma], onDelete: NoAction, onUpdate: NoAction)
-  usuario          usuario @relation(fields: [idusuario], references: [idusuario], onDelete: NoAction, onUpdate: NoAction)
-}
 
 model nota {
-  idnota            Int             @id @default(autoincrement())
+  idnota            Int              @id @default(autoincrement())
   idalunodisciplina Int
-  descricao         String?         @db.VarChar(200)
-  valor             Decimal?        @db.Decimal(5, 2)
-  data              DateTime?       @db.Date
-  alunodisciplina   alunodisciplina @relation(fields: [idalunodisciplina], references: [idalunodisciplina], onDelete: NoAction, onUpdate: NoAction)
+  descricao         String?          @db.VarChar(200)
+  valor             Decimal?         @db.Decimal(5, 2)
+  data              DateTime?        @db.Date
+
+  alunodisciplina   alunodisciplina  @relation(fields: [idalunodisciplina], references: [idalunodisciplina])
 }
+
 
 model tarefa {
-  idtarefa     Int        @id @default(autoincrement())
-  iddisciplina Int
-  tipo         String?    @db.VarChar(50)
-  descricao    String?
-  disciplina   disciplina @relation(fields: [iddisciplina], references: [iddisciplina], onDelete: NoAction, onUpdate: NoAction)
+  idtarefa        Int               @id @default(autoincrement())
+  iddisciplina    Int
+  tipo            String?           @db.VarChar(50)
+  descricao       String?
+
+  disciplina      disciplina        @relation(fields: [iddisciplina], references: [iddisciplina])
 }
 
-model turma {
-  idturma        Int              @id @default(autoincrement())
-  nome_turma     String?          @db.VarChar(50)
-  ano_letivo     Int?
-  limite_vagas   Int?
-  matriculaturma matriculaturma[]
+
+model matriculaturma {
+  idmatriculaturma Int              @id @default(autoincrement())
+  idusuario        Int
+  idturma          Int
+
+  turma            turma            @relation(fields: [idturma], references: [idturma])
+  usuario          usuario          @relation(fields: [idusuario], references: [idusuario])
 }
 
-model usuario {
-  idusuario       Int               @id @default(autoincrement())
-  cpf             String?           @unique @db.VarChar(14)
-  matricula       String?           @db.VarChar(20)
-  nome            String?           @db.VarChar(100)
-  email           String?           @unique @db.VarChar(100)
-  senha           String?           @db.VarChar(255)
-  tipo            tipo_usuario
-  alunodisciplina alunodisciplina[]
-  disciplina      disciplina[]
-  matriculaturma  matriculaturma[]
-}
-
+//////////////////////////////
+//        ENUMS            //
+//////////////////////////////
 
 enum tipo_usuario {
   aluno

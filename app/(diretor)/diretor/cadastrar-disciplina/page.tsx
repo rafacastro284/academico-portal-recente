@@ -7,96 +7,106 @@ import styles from "./CadastrarDisciplina.module.css";
 export default function CadastrarDisciplina() {
   const [nome, setNome] = useState("");
   const [professorId, setProfessorId] = useState("");
-  const [cargaHoraria, setCargaHoraria] = useState(0);
+  const [cargaHoraria, setCargaHoraria] = useState("");
   const [serieId, setSerieId] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  const [professores, setProfessores] = useState([]);
+  const [professores, setProfessores] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [mensagem, setMensagem] = useState<{ tipo: "erro"|"sucesso"|""; texto:string }>({tipo:"", texto:""});
 
-  // Carregar professores do banco
+  // ──────────────────────────────── 🔹 Carregar Professores
   useEffect(() => {
-    async function loadProfessores() {
-      const res = await fetch("/api/professores");
-      const data = await res.json();
-      setProfessores(data);
+    async function load() {
+      try {
+        const res = await fetch("/api/professores");
+        const data = await res.json();
+        setProfessores(data);
+      } catch {
+        setMensagem({tipo:"erro", texto:"Erro ao carregar professores."});
+      }
     }
-    loadProfessores();
+    load();
   }, []);
 
+  // ──────────────────────────────── 🔹 Enviar formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    const res = await fetch("/api/disciplina", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nome_disciplina: nome,
-        idprofessor: professorId,
-        carga_horaria: cargaHoraria,
-      }),
-    });
-
-    const data = await res.json();
-    setIsLoading(false);
-
-    if (!res.ok) {
-      setMessage(data.error);
+    if (!nome || !professorId || !cargaHoraria) {
+      setMensagem({tipo:"erro", texto:"Preencha todos os campos obrigatórios!"});
       return;
     }
 
-    setMessage("Disciplina cadastrada com sucesso!");
-    setNome("");
-    setProfessorId("");
-    setCargaHoraria(0);
-    setSerieId("");
+    setLoading(true);
 
-    setTimeout(() => setMessage(""), 3000);
+    try {
+      const res = await fetch("/api/disciplina", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome_disciplina: nome,
+          idprofessor: Number(professorId),
+          carga_horaria: Number(cargaHoraria),
+          serie: serieId || null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMensagem({tipo:"erro", texto: data.error || "Erro ao salvar disciplina."});
+      } else {
+        setMensagem({tipo:"sucesso", texto:"Disciplina cadastrada com sucesso!"});
+
+        // limpar
+        setNome("");
+        setProfessorId("");
+        setCargaHoraria("");
+        setSerieId("");
+
+        setTimeout(()=> setMensagem({tipo:"", texto:""}), 3000);
+      }
+    } catch {
+      setMensagem({tipo:"erro", texto: "Falha ao conectar com o servidor."});
+    }
+
+    setLoading(false);
   };
 
   return (
     <div className={styles.container}>
-      <Link href="/diretor/dashboard" className={styles.backButton}>
-        &larr; Voltar para Visão Geral
-      </Link>
+      <Link href="/diretor/dashboard" className={styles.backButton}>← Voltar</Link>
 
       <form className={styles.card} onSubmit={handleSubmit}>
-        <h1 className={styles.formTitle}>Cadastrar Nova Disciplina</h1>
+        <h1 className={styles.formTitle}>Cadastrar Disciplina</h1>
+
+        {mensagem.texto && (
+          <p className={mensagem.tipo === "erro" ? styles.errorMessage : styles.successMessage}>
+            {mensagem.texto}
+          </p>
+        )}
 
         {/* Nome da Disciplina */}
         <div className={styles.inputGroup}>
-          <label htmlFor="nome">Nome da Disciplina</label>
+          <label>Nome da Disciplina *</label>
           <input
             type="text"
-            id="nome"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
             placeholder="Ex: Matemática"
+            value={nome}
+            onChange={e => setNome(e.target.value)}
             required
           />
         </div>
 
-        {/* Professor Responsável */}
+        {/* Professor */}
         <div className={styles.inputGroup}>
-          <label htmlFor="professor">Professor Responsável</label>
-          <select
-            id="professor"
-            value={professorId}
-            onChange={(e) => setProfessorId(e.target.value)}
-            required
-          >
-            <option value="" disabled>
-              Selecione um professor
-            </option>
-
-            {professores.length === 0 && (
-              <option disabled>Nenhum professor encontrado</option>
-            )}
-
-            {professores.map((prof: any) => (
-              <option key={prof.idusuario} value={prof.idusuario}>
-                {prof.nome}
+          <label>Professor Responsável *</label>
+          <select value={professorId} onChange={e => setProfessorId(e.target.value)} required>
+            <option value="">Selecione um professor</option>
+            {professores.length === 0 && <option disabled>Carregando...</option>}
+            {professores.map((p) => (
+              <option key={p.idusuario} value={p.idusuario}>
+                {p.nome}
               </option>
             ))}
           </select>
@@ -104,32 +114,35 @@ export default function CadastrarDisciplina() {
 
         {/* Carga Horária */}
         <div className={styles.inputGroup}>
-          <label htmlFor="cargaHoraria">Carga Horária (horas)</label>
+          <label>Carga Horária (horas) *</label>
           <input
             type="number"
-            id="cargaHoraria"
+            min="1"
+            placeholder="Ex: 40"
             value={cargaHoraria}
-            onChange={(e) => setCargaHoraria(Number(e.target.value))}
-            min="0"
+            onChange={e => setCargaHoraria(e.target.value)}
             required
           />
         </div>
 
-        {/* Série (ainda não está no banco) */}
+        {/* Série opcional */}
         <div className={styles.inputGroup}>
-          <label htmlFor="serie">Série/Ano</label>
-          <select id="serie" value={serieId} onChange={(e) => setSerieId(e.target.value)}>
-            <option value="">(opcional)</option>
+          <label>Série / Ano (opcional)</label>
+          <select value={serieId} onChange={e => setSerieId(e.target.value)}>
+            <option value="">Nenhum</option>
             <option value="6ano">6º Ano</option>
-            <option value="1em">1º Ano Médio</option>
+            <option value="7ano">7º Ano</option>
+            <option value="8ano">8º Ano</option>
+            <option value="9ano">9º Ano</option>
+            <option value="1em">1º EM</option>
+            <option value="2em">2º EM</option>
+            <option value="3em">3º EM</option>
           </select>
         </div>
 
-        <button type="submit" className={styles.submitButton} disabled={isLoading}>
-          {isLoading ? "Salvando..." : "Salvar Disciplina"}
+        <button className={styles.submitButton} disabled={loading}>
+          {loading ? "Salvando..." : "Salvar"}
         </button>
-
-        {message && <p className={styles.successMessage}>{message}</p>}
       </form>
     </div>
   );

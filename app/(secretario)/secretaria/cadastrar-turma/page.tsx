@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import styles from './CadastrarTurma.module.css';
-import { diretorData, adminUserData } from '../../../lib/mockData';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import styles from "./CadastrarTurma.module.css";
+import { diretorData } from "../../../lib/mockData";
 
 const mockProfessores = diretorData.corpoDocente;
 const mockSeries = [
@@ -17,70 +17,59 @@ const mockSeries = [
   "3º Ano - Ens. Médio",
 ];
 
-const allMockAlunos = adminUserData.users
-  .filter(u => u.perfil === 'ALUNO')
-  .map(user => {
-    
-    if (user.id === 'u2') { 
-      return { ...user, serie: '8º Ano - Ens. Fundamental' };
-    }
-    if (user.id === 'u3') { 
-      return { ...user, serie: '9º Ano - Ens. Fundamental' };
-    }
-    
-    return { ...user, serie: '3º Ano - Ens. Médio' }; 
-  })
-  .concat([ 
-    { id: 'a1', nome: 'Ana Beatriz Costa', cpf: '...', perfil: 'ALUNO', matricula: '2024101', email: '...', dataCadastro: '...', serie: '3º Ano - Ens. Médio' },
-    { id: 'a2', nome: 'Bruno Gomes', cpf: '...', perfil: 'ALUNO', matricula: '2024102', email: '...', dataCadastro: '...', serie: '3º Ano - Ens. Médio' },
-    { id: 'a3', nome: 'Carla Dias', cpf: '...', perfil: 'ALUNO', matricula: '2024103', email: '...', dataCadastro: '...', serie: '3º Ano - Ens. Médio' },
-    { id: 'a4', nome: 'Daniel Moreira', cpf: '...', perfil: 'ALUNO', matricula: '2024104', email: '...', dataCadastro: '...', serie: '9º Ano - Ens. Fundamental' },
-  ]);
-
-
 export default function CadastrarTurma() {
   const router = useRouter();
-  const [nomeTurma, setNomeTurma] = useState('');
-  const [serie, setSerie] = useState(''); 
-  const [turno, setTurno] = useState('');
-  const [professorId, setProfessorId] = useState('');
+
+  const [nomeTurma, setNomeTurma] = useState("");
+  const [serie, setSerie] = useState("");
+  const [turno, setTurno] = useState("");
+  const [professorId, setProfessorId] = useState("");
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear().toString());
-  const [message, setMessage] = useState('');
-  const [alunoSearch, setAlunoSearch] = useState('');
-  const [selectedAlunos, setSelectedAlunos] = useState<string[]>([]);
-  const [availableStudents, setAvailableStudents] = useState<typeof allMockAlunos>([]);
-  const handleSerieChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const novaSerie = e.target.value;
-    setSerie(novaSerie);
-    const alunosDaSerie = allMockAlunos.filter(aluno => aluno.serie === novaSerie);
-    setAvailableStudents(alunosDaSerie);
-    setSelectedAlunos([]);
-    setAlunoSearch('');
-  };
+  const [limiteVagas, setLimiteVagas] = useState<number | "">("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const filteredAlunos = availableStudents.filter(aluno => 
-    aluno.nome.toLowerCase().includes(alunoSearch.toLowerCase()) ||
-    aluno.matricula.includes(alunoSearch)
-  );
-
-  const handleAlunoSelect = (alunoId: string) => {
-    setSelectedAlunos(prevSelected => {
-      if (prevSelected.includes(alunoId)) {
-        return prevSelected.filter(id => id !== alunoId);
-      } else {
-        return [...prevSelected, alunoId];
-      }
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("--- SALVANDO NOVA TURMA ---");
-    console.log("Alunos Selecionados (IDs):", selectedAlunos);
-    setMessage('Turma cadastrada com sucesso!');
-    setTimeout(() => {
-      router.push('/secretaria/dashboard');
-    }, 2000);
+
+    if (!nomeTurma.trim()) return setMessage("Informe o nome da turma.");
+    if (!serie) return setMessage("Selecione a série.");
+    if (!turno) return setMessage("Selecione o turno.");
+    if (!anoLetivo || Number(anoLetivo) <= 0) return setMessage("Informe ano letivo válido.");
+    if (limiteVagas === "" || Number(limiteVagas) < 0) return setMessage("Informe limite de vagas (>= 0).");
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const payload = {
+        nome_turma: nomeTurma.trim(),
+        serie,
+        turno,
+        professorId: professorId || null,
+        ano_letivo: Number(anoLetivo),
+        limite_vagas: Number(limiteVagas),
+      };
+
+      const res = await fetch("/api/turmas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data?.error || "Erro ao salvar turma.");
+      } else {
+        setMessage("Turma criada com sucesso!");
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Erro de rede ao salvar turma.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,104 +80,54 @@ export default function CadastrarTurma() {
 
       <form className={styles.card} onSubmit={handleSubmit}>
         <h1 className={styles.formTitle}>Cadastrar Nova Turma</h1>
-        
-        {/* Série/Ano */}
+
+        <div className={styles.inputGroup}>
+          <label htmlFor="nomeTurma">Nome da Turma</label>
+          <input id="nomeTurma" value={nomeTurma} onChange={(e) => setNomeTurma(e.target.value)} required />
+        </div>
+
         <div className={styles.inputGroup}>
           <label htmlFor="serie">Série/Ano</label>
-          <select 
-            id="serie" 
-            value={serie} 
-            onChange={handleSerieChange} // <-- MUDANÇA: Usa a nova função
-            required
-          >
+          <select id="serie" value={serie} onChange={(e) => setSerie(e.target.value)} required>
             <option value="" disabled>Selecione a série</option>
-            {mockSeries.map(s => <option key={s} value={s}>{s}</option>)}
+            {mockSeries.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
 
-        {/* Turno */}
         <div className={styles.inputGroup}>
           <label htmlFor="turno">Turno</label>
           <select id="turno" value={turno} onChange={(e) => setTurno(e.target.value)} required>
             <option value="" disabled>Selecione o turno</option>
             <option value="Manhã">Manhã</option>
             <option value="Tarde">Tarde</option>
-            {/* ... etc ... */}
+            <option value="Noite">Noite</option>
           </select>
         </div>
 
-        {/* Professor Responsável */}
         <div className={styles.inputGroup}>
-          <label htmlFor="professor">Professor Responsável (Regente)</label>
-          <select id="professor" value={professorId} onChange={(e) => setProfessorId(e.target.value)} required>
-            <option value="" disabled>Selecione um professor</option>
-            {mockProfessores.map(prof => (
+          <label htmlFor="professor">Professor Responsável (opcional)</label>
+          <select id="professor" value={professorId} onChange={(e) => setProfessorId(e.target.value)}>
+            <option value="">Selecione (opcional)</option>
+            {mockProfessores.map((prof) => (
               <option key={prof.id} value={prof.id}>{prof.nome} ({prof.disciplina})</option>
             ))}
           </select>
         </div>
-        
-        {/* Ano Letivo */}
+
         <div className={styles.inputGroup}>
           <label htmlFor="anoLetivo">Ano Letivo</label>
-          <input
-            type="number"
-            id="anoLetivo"
-            value={anoLetivo}
-            onChange={(e) => setAnoLetivo(e.target.value)}
-            required
-          />
+          <input id="anoLetivo" type="number" value={anoLetivo} onChange={(e) => setAnoLetivo(e.target.value)} required />
         </div>
-        {serie && (
-          <>
-            <h2 className={styles.studentSectionTitle}>
-              Selecionar Alunos (da série: {serie})
-            </h2>
-            <input
-              type="text"
-              placeholder="Pesquisar aluno por nome ou matrícula..."
-              className={styles.searchBar}
-              value={alunoSearch}
-              onChange={(e) => setAlunoSearch(e.target.value)}
-            />
-            
-            <div className={styles.studentListContainer}>
-              {availableStudents.length === 0 && (
-                <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
-                  Nenhum aluno encontrado para esta série.
-                </div>
-              )}
 
-             
-              {availableStudents.length > 0 && filteredAlunos.length === 0 && (
-                <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
-                  Nenhum aluno encontrado com o termo "{alunoSearch}".
-                </div>
-              )}
+        <div className={styles.inputGroup}>
+          <label htmlFor="limiteVagas">Limite de Vagas</label>
+          <input id="limiteVagas" type="number" min={0} value={limiteVagas === "" ? "" : String(limiteVagas)} onChange={(e) => setLimiteVagas(e.target.value === "" ? "" : Number(e.target.value))} required />
+        </div>
 
-              {filteredAlunos.map(aluno => (
-                <div key={aluno.id} className={styles.studentItem} onClick={() => handleAlunoSelect(aluno.id)}>
-                  <input
-                    type="checkbox"
-                    id={aluno.id}
-                    checked={selectedAlunos.includes(aluno.id)}
-                    onChange={() => handleAlunoSelect(aluno.id)}
-                  />
-                  <label htmlFor={aluno.id}>
-                    {aluno.nome} - Matrícula: {aluno.matricula}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-       
-        
-        <button type="submit" className={styles.submitButton}>
-          Salvar Turma
+        <button type="submit" className={styles.submitButton} disabled={loading}>
+          {loading ? "Salvando..." : "Salvar Turma"}
         </button>
 
-       
         {message && <p className={styles.successMessage}>{message}</p>}
       </form>
     </div>
