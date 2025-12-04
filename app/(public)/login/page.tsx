@@ -1,65 +1,62 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { loginAction } from '@/lib/actions'; // Importa a action do backend
 import styles from './Login.module.css';
 
 export default function Login() {
+  const router = useRouter();
   const [cpf, setCpf] = useState('');
-  const [senha, setSenha] = useState('');
+  const [senha, setSenha] = useState(''); // Mudei de password para senha para bater com o back
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  // 🧮 Função para formatar o CPF conforme o usuário digita
-  const formatarCPF = (valor: string) => {
-    return valor
-      .replace(/\D/g, '') // remove caracteres não numéricos
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-      .slice(0, 14);
-  };
-
+  // 1. A MÁSCARA DE CPF (Essencial para facilitar a vida do usuário)
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const valorFormatado = formatarCPF(e.target.value);
-    setCpf(valorFormatado);
+    let valor = e.target.value.replace(/\D/g, '');
+    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+    valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    setCpf(valor.slice(0, 14));
   };
 
-  // ✅ Função principal de login
-const handleSubmit = async (event: React.FormEvent) => {
-  event.preventDefault();
-  setError('');
-  setLoading(true);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+    setLoading(true);
 
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cpf, senha }),
-    });
+    try {
+      // 2. CHAMA O BACKEND REAL (Em vez do fakeUsers)
+      const resultado = await loginAction({ cpf, senha });
 
-    const data = await res.json();
+      if (resultado.success) {
+        const tipo = (resultado.usuario?.tipo || '').toLowerCase();
+        
+        console.log(`Login como ${tipo} bem-sucedido!`);
 
-    if (res.ok) {
-      localStorage.setItem('usuarioLogado', JSON.stringify(data.usuario));
-      router.push(data.redirectPath); // 👈 redireciona conforme o backend
-    } else {
-      setError(data.error || 'Erro ao fazer login.');
+        // 3. REDIRECIONAMENTO INTELIGENTE
+        if (tipo === 'admin') router.push('/admin/dashboard');
+        else if (tipo === 'aluno') router.push('/aluno/dashboard');
+        else if (tipo === 'professor') router.push('/professor/dashboard');
+        else if (tipo === 'diretor') router.push('/diretor/dashboard');
+        else if (tipo === 'secretario') router.push('/secretario/dashboard');
+        else router.push('/'); // Fallback
+      } else {
+        setError(resultado.error || 'CPF ou senha inválidos.');
+      }
+    } catch (err) {
+      setError('Erro de conexão. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Erro no login:', error);
-    setError('Erro ao conectar ao servidor.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   return (
     <div className={styles.loginBox}>
       <h1 className={styles.title}>Acesse sua conta</h1>
-
+      
       <form onSubmit={handleSubmit}>
-        {/* Campo de CPF */}
         <div className={styles.inputGroup}>
           <label htmlFor="cpf">CPF</label>
           <input
@@ -67,28 +64,30 @@ const handleSubmit = async (event: React.FormEvent) => {
             id="cpf"
             placeholder="Digite seu CPF"
             value={cpf}
-            onChange={handleCpfChange}
+            onChange={handleCpfChange} // Usa a máscara aqui
             required
           />
         </div>
-
-        {/* Campo de senha */}
+        
         <div className={styles.inputGroup}>
-          <label htmlFor="senha">Senha</label>
+          <label htmlFor="password">Senha</label>
           <input
             type="password"
-            id="senha"
+            id="password"
             placeholder="Digite sua senha"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
           />
         </div>
-
-        {/* Exibição de erro */}
+        
+        {/* Exibe erro se houver */}
         {error && <p className={styles.errorMessage}>{error}</p>}
+        
+        <a href="#" className={styles.forgotPassword}>
+          Esqueceu a senha?
+        </a>
 
-        {/* Botão de envio */}
         <button type="submit" className={styles.loginButton} disabled={loading}>
           {loading ? 'Entrando...' : 'Entrar'}
         </button>

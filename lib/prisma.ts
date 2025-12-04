@@ -1,19 +1,9 @@
 
-import { PrismaClient } from '@prisma/client';
-// Boas práticas do Next.js para evitar múltiplas instâncias em desenvolvimento
-const prismaClientSingleton = () => {
-  return new PrismaClient();
-};
+import { PrismaClient } from '@prisma/client'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
-}
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
+// AQUI ESTÁ O SEGREDO: "export const" (com chaves)
+export const prisma = globalForPrisma.prisma || new PrismaClient()
 
-export default prisma;
-
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prismaGlobal = prisma;
-}
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
