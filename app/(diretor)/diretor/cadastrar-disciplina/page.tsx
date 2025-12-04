@@ -119,7 +119,7 @@ export default function CadastrarDisciplina() {
         <div className={styles.inputGroup}>
           <label htmlFor="serie">Série/Ano</label>
           <select id="serie" value={serieId} onChange={(e) => setSerieId(e.target.value)}>
-            <option value="">(opcional)</option>
+            <option value=""></option>
             <option value="6ano">6º Ano</option>
             <option value="1em">1º Ano Médio</option>
           </select>
