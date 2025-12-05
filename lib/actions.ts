@@ -95,7 +95,6 @@ export async function excluirUsuarioAction(id: number) {
 // 3. PROFESSOR
 // =========================================================
 
-// --- ESTA É A FUNÇÃO QUE ESTAVA FALTANDO ---
 export async function getDashboardProfessorAction(idProfessor: number) {
   try {
     const db = prisma as any;
@@ -235,7 +234,7 @@ export async function lancarNotasAction(dados: {
 }
 
 // =========================================================
-// 2. ALUNO
+// 4. ALUNO
 // =========================================================
 export async function getDashboardAlunoAction(idAluno: number) {
   try {
@@ -327,4 +326,44 @@ export async function getDetalhesDisciplinaAction(idDisciplina: number) {
       }
     };
   } catch (e) { return { success: false, error: "Erro" }; }
+}
+
+// =========================================================
+// 5. SECRETARIO
+// =========================================================
+
+export async function getDashboardSecretarioAction(idUsuario: number) {
+  try {
+    // 1. Busca dados do próprio secretário
+    const usuario = await prisma.usuario.findUnique({
+      where: { idusuario: idUsuario }
+    });
+
+    if (!usuario) {
+      return { success: false, error: "Usuário não encontrado." };
+    }
+
+    // 2. Busca contadores do sistema para o Dashboard
+    const [totalAlunos, totalProfessores, totalTurmas] = await prisma.$transaction([
+      prisma.usuario.count({ where: { tipo: 'aluno' } }),
+      prisma.usuario.count({ where: { tipo: 'professor' } }),
+      prisma.turma.count(),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        nome: usuario.nome,
+        tipo: usuario.tipo,
+        stats: {
+          alunos: totalAlunos,
+          professores: totalProfessores,
+          turmas: totalTurmas
+        }
+      }
+    };
+  } catch (error) {
+    console.error("Erro dashboard secretaria:", error);
+    return { success: false, error: "Erro ao carregar dados do dashboard." };
+  }
 }

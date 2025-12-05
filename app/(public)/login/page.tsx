@@ -8,11 +8,11 @@ import styles from './Login.module.css';
 export default function Login() {
   const router = useRouter();
   const [cpf, setCpf] = useState('');
-  const [senha, setSenha] = useState(''); // Mudei de password para senha para bater com o back
+  const [senha, setSenha] = useState(''); 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 1. A MÁSCARA DE CPF (Essencial para facilitar a vida do usuário)
+  // 1. A MÁSCARA DE CPF 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let valor = e.target.value.replace(/\D/g, '');
     valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
@@ -27,7 +27,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 2. CHAMA O BACKEND REAL (Em vez do fakeUsers)
+      // 2. CHAMA O BACKEND REAL 
       const resultado = await loginAction({ cpf, senha });
 
       if (resultado.success) {
@@ -40,7 +40,7 @@ export default function Login() {
         else if (tipo === 'aluno') router.push('/aluno/dashboard');
         else if (tipo === 'professor') router.push('/professor/dashboard');
         else if (tipo === 'diretor') router.push('/diretor/dashboard');
-        else if (tipo === 'secretario') router.push('/secretario/dashboard');
+        else if (tipo === 'secretario') router.push('/secretaria/dashboard');
         else router.push('/'); // Fallback
       } else {
         setError(resultado.error || 'CPF ou senha inválidos.');
