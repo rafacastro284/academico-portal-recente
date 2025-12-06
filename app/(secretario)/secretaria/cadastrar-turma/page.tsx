@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import styles from "./CadastrarTurma.module.css";
-import { diretorData } from "../../../lib/mockData";
+import { useState, useEffect } from 'react'; // MUDANÇA: useEffect adicionado
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import styles from './CadastrarTurma.module.css';
 
-const mockProfessores = diretorData.corpoDocente;
+// MUDANÇA: Importar as actions
+import { cadastrarTurmaAction, getDadosCadastroTurmaAction } from '@/lib/actions';
+
 const mockSeries = [
   "6º Ano - Ens. Fundamental",
   "7º Ano - Ens. Fundamental",
@@ -19,58 +20,91 @@ const mockSeries = [
 
 export default function CadastrarTurma() {
   const router = useRouter();
-
-  const [nomeTurma, setNomeTurma] = useState("");
-  const [serie, setSerie] = useState("");
-  const [turno, setTurno] = useState("");
-  const [professorId, setProfessorId] = useState("");
+  
+  // Estados do formulário
+  const [nomeTurma, setNomeTurma] = useState(''); // MUDANÇA: Adicionado input para Nome da Turma se não houver
+  const [serie, setSerie] = useState(''); 
+  const [turno, setTurno] = useState('');
+  const [disciplinaId, setDisciplinaId] = useState(''); // MUDANÇA: De professorId para disciplinaId
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear().toString());
-  const [limiteVagas, setLimiteVagas] = useState<number | "">("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [limiteVagas, setLimiteVagas] = useState('30'); // Opcional
+  
+  // Estados de dados e UI
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true); // MUDANÇA: Estado de carregamento
+  
+  // Estados para busca de alunos
+  const [alunoSearch, setAlunoSearch] = useState('');
+  const [selectedAlunos, setSelectedAlunos] = useState<number[]>([]); // MUDANÇA: Array de números (IDs)
+  const [dbAlunos, setDbAlunos] = useState<any[]>([]); // Dados reais do banco
+  const [dbDisciplinas, setDbDisciplinas] = useState<any[]>([]); // Dados reais do banco
+
+  // MUDANÇA: Carregar dados reais ao montar o componente
+  useEffect(() => {
+    async function loadData() {
+      const res = await getDadosCadastroTurmaAction();
+      if (res.success) {
+        setDbAlunos(res.alunos || []);
+        setDbDisciplinas(res.disciplinas || []);
+      } else {
+        setMessage("Erro ao carregar listas do sistema.");
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  // Lógica de filtro de alunos
+  // Nota: Filtra apenas na busca visual, mas mantém todos disponíveis
+  const filteredAlunos = dbAlunos.filter(aluno => 
+    aluno.nome.toLowerCase().includes(alunoSearch.toLowerCase()) ||
+    (aluno.matricula && aluno.matricula.includes(alunoSearch))
+  );
+
+  const handleAlunoSelect = (alunoId: number) => {
+    setSelectedAlunos(prevSelected => {
+      if (prevSelected.includes(alunoId)) {
+        return prevSelected.filter(id => id !== alunoId);
+      } else {
+        return [...prevSelected, alunoId];
+      }
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage('');
+    
+    // MUDANÇA: Validação básica
+    if (!nomeTurma) { 
+        // Se você não tiver um campo input para nome, gere um automático:
+        // const autoNome = `${serie} - ${turno}`;
+        alert("Preencha o nome da turma"); return;
+    }
 
-    if (!nomeTurma.trim()) return setMessage("Informe o nome da turma.");
-    if (!serie) return setMessage("Selecione a série.");
-    if (!turno) return setMessage("Selecione o turno.");
-    if (!anoLetivo || Number(anoLetivo) <= 0) return setMessage("Informe ano letivo válido.");
-    if (limiteVagas === "" || Number(limiteVagas) < 0) return setMessage("Informe limite de vagas (>= 0).");
+    console.log("--- ENVIANDO PARA O SERVER ACTION ---");
 
-    setLoading(true);
-    setMessage("");
+    const response = await cadastrarTurmaAction({
+      nome_turma: nomeTurma,
+      serie: serie,
+      turno: turno,
+      ano_letivo: parseInt(anoLetivo),
+      limite_vagas: parseInt(limiteVagas),
+      disciplinaId: parseInt(disciplinaId), // O ID da disciplina principal/regente
+      alunosIds: selectedAlunos // Array de números
+    });
 
-    try {
-      const payload = {
-        nome_turma: nomeTurma.trim(),
-        serie,
-        turno,
-        professorId: professorId || null,
-        ano_letivo: Number(anoLetivo),
-        limite_vagas: Number(limiteVagas),
-      };
-
-      const res = await fetch("/api/turmas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage(data?.error || "Erro ao salvar turma.");
-      } else {
-        setMessage("Turma criada com sucesso!");
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("Erro de rede ao salvar turma.");
-    } finally {
-      setLoading(false);
+    if (response.success) {
+      setMessage('✅ Turma cadastrada com sucesso!');
+      setTimeout(() => {
+        router.push('/secretaria/dashboard');
+      }, 2000);
+    } else {
+      setMessage(`❌ Erro: ${response.error}`);
     }
   };
+
+  if (loading) return <div className={styles.container}><p>Carregando dados...</p></div>;
 
   return (
     <div className={styles.container}>
@@ -80,20 +114,35 @@ export default function CadastrarTurma() {
 
       <form className={styles.card} onSubmit={handleSubmit}>
         <h1 className={styles.formTitle}>Cadastrar Nova Turma</h1>
-
+        
+        {/* Nome da Turma (Campo Novo sugerido) */}
         <div className={styles.inputGroup}>
           <label htmlFor="nomeTurma">Nome da Turma</label>
-          <input id="nomeTurma" value={nomeTurma} onChange={(e) => setNomeTurma(e.target.value)} required />
+          <input 
+            type="text" 
+            id="nomeTurma"
+            value={nomeTurma}
+            onChange={(e) => setNomeTurma(e.target.value)}
+            placeholder="Ex: 9º Ano A"
+            required
+          />
         </div>
 
+        {/* Série/Ano */}
         <div className={styles.inputGroup}>
           <label htmlFor="serie">Série/Ano</label>
-          <select id="serie" value={serie} onChange={(e) => setSerie(e.target.value)} required>
+          <select 
+            id="serie" 
+            value={serie} 
+            onChange={(e) => setSerie(e.target.value)} 
+            required
+          >
             <option value="" disabled>Selecione a série</option>
-            {mockSeries.map((s) => <option key={s} value={s}>{s}</option>)}
+            {mockSeries.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
 
+        {/* Turno */}
         <div className={styles.inputGroup}>
           <label htmlFor="turno">Turno</label>
           <select id="turno" value={turno} onChange={(e) => setTurno(e.target.value)} required>
@@ -104,31 +153,79 @@ export default function CadastrarTurma() {
           </select>
         </div>
 
+        {/* Professor/Disciplina Responsável */}
         <div className={styles.inputGroup}>
-          <label htmlFor="professor">Professor Responsável (opcional)</label>
-          <select id="professor" value={professorId} onChange={(e) => setProfessorId(e.target.value)}>
-            <option value="">Selecione (opcional)</option>
-            {mockProfessores.map((prof) => (
-              <option key={prof.id} value={prof.id}>{prof.nome} ({prof.disciplina})</option>
+          <label htmlFor="disciplina">Disciplina / Professor Regente</label>
+          {/* MUDANÇA: O value agora é o ID da DISCIPLINA, pois é o que liga a tabela N:N */}
+          <select id="disciplina" value={disciplinaId} onChange={(e) => setDisciplinaId(e.target.value)} required>
+            <option value="" disabled>Selecione a disciplina principal</option>
+            {dbDisciplinas.map(disc => (
+              <option key={disc.iddisciplina} value={disc.iddisciplina}>
+                {disc.nome_disciplina} ({disc.professor?.nome || 'Sem Prof.'})
+              </option>
             ))}
           </select>
         </div>
-
+        
+        {/* Ano Letivo */}
         <div className={styles.inputGroup}>
           <label htmlFor="anoLetivo">Ano Letivo</label>
-          <input id="anoLetivo" type="number" value={anoLetivo} onChange={(e) => setAnoLetivo(e.target.value)} required />
+          <input
+            type="number"
+            id="anoLetivo"
+            value={anoLetivo}
+            onChange={(e) => setAnoLetivo(e.target.value)}
+            required
+          />
         </div>
 
-        <div className={styles.inputGroup}>
-          <label htmlFor="limiteVagas">Limite de Vagas</label>
-          <input id="limiteVagas" type="number" min={0} value={limiteVagas === "" ? "" : String(limiteVagas)} onChange={(e) => setLimiteVagas(e.target.value === "" ? "" : Number(e.target.value))} required />
-        </div>
+        {/* Seleção de Alunos */}
+        {serie && (
+          <>
+            <h2 className={styles.studentSectionTitle}>
+              Selecionar Alunos
+            </h2>
+            <input
+              type="text"
+              placeholder="Pesquisar aluno por nome..."
+              className={styles.searchBar}
+              value={alunoSearch}
+              onChange={(e) => setAlunoSearch(e.target.value)}
+            />
+            
+            <div className={styles.studentListContainer}>
+              {filteredAlunos.length === 0 && (
+                <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
+                  Nenhum aluno encontrado.
+                </div>
+              )}
 
-        <button type="submit" className={styles.submitButton} disabled={loading}>
-          {loading ? "Salvando..." : "Salvar Turma"}
+              {filteredAlunos.map(aluno => (
+                <div key={aluno.idusuario} className={styles.studentItem} onClick={() => handleAlunoSelect(aluno.idusuario)}>
+                  <input
+                    type="checkbox"
+                    id={`aluno-${aluno.idusuario}`}
+                    checked={selectedAlunos.includes(aluno.idusuario)}
+                    onChange={() => handleAlunoSelect(aluno.idusuario)}
+                  />
+                  <label htmlFor={`aluno-${aluno.idusuario}`}>
+                    {aluno.nome} {aluno.matricula ? `- Mat: ${aluno.matricula}` : ''}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+       
+        <button type="submit" className={styles.submitButton}>
+          Salvar Turma
         </button>
 
-        {message && <p className={styles.successMessage}>{message}</p>}
+        {message && (
+            <p className={message.includes('Erro') ? styles.errorMessage : styles.successMessage}>
+                {message}
+            </p>
+        )}
       </form>
     </div>
   );

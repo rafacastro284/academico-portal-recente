@@ -2,12 +2,25 @@
 CREATE TYPE "tipo_usuario" AS ENUM ('aluno', 'professor', 'secretario', 'admin', 'diretor');
 
 -- CreateTable
-CREATE TABLE "alunodisciplina" (
-    "idalunodisciplina" SERIAL NOT NULL,
-    "idaluno" INTEGER NOT NULL,
-    "iddisciplina" INTEGER NOT NULL,
+CREATE TABLE "turmadisciplina" (
+    "id" SERIAL NOT NULL,
+    "turmaid" INTEGER NOT NULL,
+    "disciplinaid" INTEGER NOT NULL,
 
-    CONSTRAINT "alunodisciplina_pkey" PRIMARY KEY ("idalunodisciplina")
+    CONSTRAINT "turmadisciplina_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "usuario" (
+    "idusuario" SERIAL NOT NULL,
+    "cpf" VARCHAR(14),
+    "matricula" VARCHAR(20),
+    "nome" VARCHAR(100),
+    "email" VARCHAR(100),
+    "senha" VARCHAR(255),
+    "tipo" "tipo_usuario" NOT NULL,
+
+    CONSTRAINT "usuario_pkey" PRIMARY KEY ("idusuario")
 );
 
 -- CreateTable
@@ -21,16 +34,6 @@ CREATE TABLE "disciplina" (
 );
 
 -- CreateTable
-CREATE TABLE "frequencia" (
-    "idfrequencia" SERIAL NOT NULL,
-    "idalunodisciplina" INTEGER NOT NULL,
-    "data" DATE,
-    "faltas" INTEGER DEFAULT 0,
-
-    CONSTRAINT "frequencia_pkey" PRIMARY KEY ("idfrequencia")
-);
-
--- CreateTable
 CREATE TABLE "turma" (
     "idturma" SERIAL NOT NULL,
     "nome_turma" VARCHAR(50),
@@ -40,6 +43,25 @@ CREATE TABLE "turma" (
     "turno" VARCHAR(30),
 
     CONSTRAINT "turma_pkey" PRIMARY KEY ("idturma")
+);
+
+-- CreateTable
+CREATE TABLE "alunodisciplina" (
+    "idalunodisciplina" SERIAL NOT NULL,
+    "idaluno" INTEGER NOT NULL,
+    "iddisciplina" INTEGER NOT NULL,
+
+    CONSTRAINT "alunodisciplina_pkey" PRIMARY KEY ("idalunodisciplina")
+);
+
+-- CreateTable
+CREATE TABLE "frequencia" (
+    "idfrequencia" SERIAL NOT NULL,
+    "idalunodisciplina" INTEGER NOT NULL,
+    "data" DATE,
+    "faltas" INTEGER DEFAULT 0,
+
+    CONSTRAINT "frequencia_pkey" PRIMARY KEY ("idfrequencia")
 );
 
 -- CreateTable
@@ -72,18 +94,8 @@ CREATE TABLE "matriculaturma" (
     CONSTRAINT "matriculaturma_pkey" PRIMARY KEY ("idmatriculaturma")
 );
 
--- CreateTable
-CREATE TABLE "usuario" (
-    "idusuario" SERIAL NOT NULL,
-    "cpf" VARCHAR(14),
-    "matricula" VARCHAR(20),
-    "nome" VARCHAR(100),
-    "email" VARCHAR(100),
-    "senha" VARCHAR(255),
-    "tipo" "tipo_usuario" NOT NULL,
-
-    CONSTRAINT "usuario_pkey" PRIMARY KEY ("idusuario")
-);
+-- CreateIndex
+CREATE UNIQUE INDEX "turmadisciplina_turmaid_disciplinaid_key" ON "turmadisciplina"("turmaid", "disciplinaid");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "usuario_cpf_key" ON "usuario"("cpf");
@@ -92,13 +104,19 @@ CREATE UNIQUE INDEX "usuario_cpf_key" ON "usuario"("cpf");
 CREATE UNIQUE INDEX "usuario_email_key" ON "usuario"("email");
 
 -- AddForeignKey
+ALTER TABLE "turmadisciplina" ADD CONSTRAINT "turmadisciplina_turmaid_fkey" FOREIGN KEY ("turmaid") REFERENCES "turma"("idturma") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "turmadisciplina" ADD CONSTRAINT "turmadisciplina_disciplinaid_fkey" FOREIGN KEY ("disciplinaid") REFERENCES "disciplina"("iddisciplina") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "disciplina" ADD CONSTRAINT "disciplina_idprofessor_fkey" FOREIGN KEY ("idprofessor") REFERENCES "usuario"("idusuario") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "alunodisciplina" ADD CONSTRAINT "alunodisciplina_idaluno_fkey" FOREIGN KEY ("idaluno") REFERENCES "usuario"("idusuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "alunodisciplina" ADD CONSTRAINT "alunodisciplina_iddisciplina_fkey" FOREIGN KEY ("iddisciplina") REFERENCES "disciplina"("iddisciplina") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "disciplina" ADD CONSTRAINT "disciplina_idprofessor_fkey" FOREIGN KEY ("idprofessor") REFERENCES "usuario"("idusuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "frequencia" ADD CONSTRAINT "frequencia_idalunodisciplina_fkey" FOREIGN KEY ("idalunodisciplina") REFERENCES "alunodisciplina"("idalunodisciplina") ON DELETE RESTRICT ON UPDATE CASCADE;

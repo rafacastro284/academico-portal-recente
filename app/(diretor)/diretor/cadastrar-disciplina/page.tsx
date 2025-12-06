@@ -3,55 +3,98 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "./CadastrarDisciplina.module.css";
+import {
+  listarProfessoresAction,
+  listarTurmasAction, 
+  cadastrarDisciplinaComVinculoAction,  
+} from '@/lib/actions'; // Verifique o caminho se ele mudou para '@/lib/actions'
 
 export default function CadastrarDisciplina() {
   const [nome, setNome] = useState("");
-  const [professorId, setProfessorId] = useState("");
-  const [cargaHoraria, setCargaHoraria] = useState(0);
-  const [serieId, setSerieId] = useState("");
+  const [professorId, setProfessorId] = useState<string>(""); 
+  const [cargaHoraria, setCargaHoraria] = useState<number>(0);
+  const [turmaId, setTurmaId] = useState<string>(""); 
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const [professores, setProfessores] = useState([]);
+  const [professores, setProfessores] = useState<any[]>([]);
+  const [turmas, setTurmas] = useState<any[]>([]); 
 
-  // Carregar professores do banco
-  useEffect(() => {
-    async function loadProfessores() {
-      const res = await fetch("/api/professores");
-      const data = await res.json();
-      setProfessores(data);
+// --- Em CadastrarDisciplina.tsx > useEffect ---
+// --- Em CadastrarDisciplina.tsx (Bloco useEffect completo) ---
+useEffect(() => {
+    async function loadData() {
+        setIsLoading(true);
+        setMessage("Carregando dados necessários...");
+        let successCount = 0;
+
+        // 1. CARREGAR PROFESSORES
+        const profRes = await listarProfessoresAction(); 
+        if (profRes.success && profRes.data) {
+            setProfessores(profRes.data);
+            console.log("Professores carregados com sucesso. Total:", profRes.data.length); 
+            successCount++;
+        } else {
+            // Se falhar, defina a mensagem para o usuário
+            setMessage(`❌ Erro ao carregar professores: ${profRes.error}`); 
+            console.error("ERRO FRONTEND: Falha na Action listarProfessores:", profRes.error); 
+        }
+
+        // 2. CARREGAR TURMAS
+        const turmaRes = await listarTurmasAction();
+        if (turmaRes.success && turmaRes.data) {
+            setTurmas(turmaRes.data);
+            console.log("Turmas carregadas com sucesso. Total:", turmaRes.data.length); 
+            successCount++;
+        } else {
+            // Se falhar, defina a mensagem para o usuário
+            setMessage(`❌ Erro ao carregar turmas: ${turmaRes.error}`); 
+            console.error("ERRO FRONTEND: Falha na Action listarTurmas:", turmaRes.error); 
+        }
+        
+        setIsLoading(false);
+        if (successCount === 2) {
+             setMessage(""); // Limpa mensagem se ambos carregaram
+        }
     }
-    loadProfessores();
-  }, []);
-
+    loadData();
+}, []); // O array de dependências vazio garante que roda apenas uma vez
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setMessage("");
 
-    const res = await fetch("/api/disciplina", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nome_disciplina: nome,
-        idprofessor: professorId,
-        carga_horaria: cargaHoraria,
-      }),
+    // Validação de inputs
+    if (!turmaId || !professorId || !nome || cargaHoraria <= 0) {
+        setIsLoading(false);
+        setMessage("❌ Erro: Preencha todos os campos obrigatórios (Turma, Professor, Nome e Carga Horária).");
+        return;
+    }
+    
+    // MUDANÇA: Chamada da Action Transacional Única
+    const res = await cadastrarDisciplinaComVinculoAction({
+      nome_disciplina: nome,
+      idprofessor: Number(professorId), 
+      carga_horaria: cargaHoraria,
+      turmaId: Number(turmaId)
     });
 
-    const data = await res.json();
-    setIsLoading(false);
-
-    if (!res.ok) {
-      setMessage(data.error);
+    if (!res.success) {
+      setIsLoading(false);
+      setMessage(`❌ Erro no cadastro e vínculo: ${res.error}`);
       return;
     }
+    
+    // Sucesso
+    setMessage("✅ Disciplina cadastrada e vinculada à turma com sucesso!");
 
-    setMessage("Disciplina cadastrada com sucesso!");
+    // Limpar o formulário
     setNome("");
     setProfessorId("");
     setCargaHoraria(0);
-    setSerieId("");
+    setTurmaId(""); 
 
+    setIsLoading(false);
     setTimeout(() => setMessage(""), 3000);
   };
 
@@ -74,6 +117,7 @@ export default function CadastrarDisciplina() {
             onChange={(e) => setNome(e.target.value)}
             placeholder="Ex: Matemática"
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -85,17 +129,11 @@ export default function CadastrarDisciplina() {
             value={professorId}
             onChange={(e) => setProfessorId(e.target.value)}
             required
+            disabled={isLoading || professores.length === 0}
           >
-            <option value="" disabled>
-              Selecione um professor
-            </option>
-
-            {professores.length === 0 && (
-              <option disabled>Nenhum professor encontrado</option>
-            )}
-
-            {professores.map((prof: any) => (
-              <option key={prof.idusuario} value={prof.idusuario}>
+            <option value="" disabled>Selecione um professor</option>
+            {professores.map((prof) => (
+              <option key={prof.idusuario} value={String(prof.idusuario)}> 
                 {prof.nome}
               </option>
             ))}
@@ -110,26 +148,38 @@ export default function CadastrarDisciplina() {
             id="cargaHoraria"
             value={cargaHoraria}
             onChange={(e) => setCargaHoraria(Number(e.target.value))}
-            min="0"
+            min="1"
             required
+            disabled={isLoading}
           />
         </div>
 
-        {/* Série (ainda não está no banco) */}
+        {/* Turma (AGORA OBRIGATÓRIO) */}
         <div className={styles.inputGroup}>
-          <label htmlFor="serie">Série/Ano</label>
-          <select id="serie" value={serieId} onChange={(e) => setSerieId(e.target.value)}>
-            <option value=""></option>
-            <option value="6ano">6º Ano</option>
-            <option value="1em">1º Ano Médio</option>
+          <label htmlFor="turma">Vincular à Turma</label>
+          <select 
+            id="turma" 
+            value={turmaId} 
+            onChange={(e) => setTurmaId(e.target.value)}
+            required
+            disabled={isLoading || turmas.length === 0}
+          >
+            <option value="" disabled>
+              {turmas.length === 0 ? "Carregando turmas..." : "Selecione a turma"}
+            </option>
+            {turmas.map((turma) => (
+                <option key={turma.idturma} value={String(turma.idturma)}>
+                    {turma.nome_turma} ({turma.serie})
+                </option>
+            ))}
           </select>
         </div>
 
-        <button type="submit" className={styles.submitButton} disabled={isLoading}>
-          {isLoading ? "Salvando..." : "Salvar Disciplina"}
+        <button type="submit" className={styles.submitButton} disabled={isLoading || turmas.length === 0 || !professorId || !nome || cargaHoraria <= 0}>
+          {isLoading ? "Salvando..." : "Salvar e Vincular Disciplina"}
         </button>
 
-        {message && <p className={styles.successMessage}>{message}</p>}
+        {message && <p className={message.includes('Erro') ? styles.errorMessage : styles.successMessage}>{message}</p>}
       </form>
     </div>
   );
