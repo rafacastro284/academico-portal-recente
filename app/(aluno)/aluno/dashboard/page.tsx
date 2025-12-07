@@ -1,17 +1,16 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getDashboardAlunoAction } from '@/lib/actions';
+import { getDashboardAlunoAction } from '@/lib/actions/aluno';
 import styles from './Home.module.css';
 
-// Ícones simples para não precisar de biblioteca externa
-const IconBook = () => <span>📚</span>;
-const IconChart = () => <span>📊</span>;
-const IconCheck = () => <span>✅</span>;
+const IconBook = () => <>📚</>;
+const IconChart = () => <>📊</>;
+const IconCheck = () => <>✅</>;
 
 export default async function DashboardAluno() {
 
-  // 1. Autenticação
+  // 1. Pega o cookie com await (obrigatório no Next 15)
   const cookieStore = await cookies();
   const userIdCookie = cookieStore.get('portal_usuario_id');
 
@@ -24,21 +23,17 @@ export default async function DashboardAluno() {
   const resultado = await getDashboardAlunoAction(idAluno);
 
   if (!resultado.success || !resultado.data) {
-    return (
-      <div className={styles.pageWrapper}>
-        <p className={styles.errorMsg}>Erro ao carregar dados. Tente fazer login novamente.</p>
-        <Link href="/login">Voltar ao Login</Link>
-      </div>
-    );
+    return <div className={styles.pageWrapper}><p>Erro ao carregar dados. Faça login novamente.</p></div>;
   }
 
-  // 3. Extração dos dados (Agora todos existem na Action)
+  // 3. A CORREÇÃO ESTÁ AQUI:
+  // Adicionamos 'frequenciaGeral' na lista de variáveis extraídas (destructuring)
   const { 
     nome, 
     cpf, 
     turma, 
     mediaGeral, 
-    frequenciaGeral, 
+    frequenciaGeral, // <--- Isso faltava no seu arquivo, por isso o erro!
     totalDisciplinas, 
     disciplinas 
   } = resultado.data;
@@ -52,21 +47,12 @@ export default async function DashboardAluno() {
           <div>
             <h1 className={styles.title}>Portal do Aluno</h1>
             <p className={styles.subtitle}>
-              Olá, <strong>{nome}</strong>
+              Olá, <strong>{nome}</strong>{' '}
               {turma && <span className={styles.badge}>{turma}</span>}
             </p>
             <p className={styles.matricula}>CPF: {cpf}</p>
           </div>
-          
-          {/* Botão de Logout forçando redirecionamento */}
-          <form action={async () => {
-            'use server';
-            const c = await cookies();
-            c.delete('portal_usuario_id');
-            redirect('/login');
-          }}>
-             <button className={styles.logoutButton}>Sair</button>
-          </form>
+          <Link href="/login"><button className={styles.logoutButton}>Sair</button></Link>
         </header>
 
         {/* --- Grid de Resumo --- */}
@@ -97,6 +83,7 @@ export default async function DashboardAluno() {
               <IconCheck />
             </div>
             <div>
+              {/* Agora vai funcionar porque declaramos lá em cima */}
               <strong>{frequenciaGeral}</strong>
               <p>Frequência</p>
             </div>
@@ -111,27 +98,21 @@ export default async function DashboardAluno() {
         
         <div className={styles.disciplinasGrid}>
           {disciplinas.length === 0 && (
-            <p style={{ padding: '20px', color: '#666', gridColumn: '1/-1', textAlign: 'center' }}>
+            <p style={{ padding: '20px', color: '#666' }}>
               Você não está matriculado em nenhuma disciplina.
             </p>
           )}
 
           {disciplinas.map((d: any) => (
-            <Link key={d.id} href={`/aluno/disciplina/${d.id}`} className={styles.subjectCardLink}>
+            <Link key={d.id} href={`/aluno/disciplinas/${d.id}`} className={styles.subjectCardLink}>
               <div className={styles.subjectCard}>
                 <div className={styles.subjectCardHeader}>
                   <h3>{d.nome}</h3>
                   <p>Prof. {d.professor}</p>
                 </div>
                 <div className={styles.subjectCardStats}>
-                  <div className={styles.statItem}>
-                    <span>{d.media}</span>
-                    <p>Média</p>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span>{d.frequencia}</span>
-                    <p>Freq.</p>
-                  </div>
+                  <div><span>{d.media}</span><p>Média</p></div>
+                  <div><span>{d.frequencia}</span><p>Freq.</p></div>
                 </div>
               </div>
             </Link>

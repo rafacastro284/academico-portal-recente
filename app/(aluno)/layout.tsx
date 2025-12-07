@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buscarUsuarioPorIdAction } from '@/lib/actions'; // Reutilizamos a action de busca
+import { buscarUsuarioPorIdAction } from '@/lib/actions/admin'; // Reutilizamos a action de busca
 import styles from './AlunoLayout.module.css';
 
 export default async function AlunoLayout({

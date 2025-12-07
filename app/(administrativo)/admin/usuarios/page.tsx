@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { listarUsuariosAction, excluirUsuarioAction } from '@/lib/actions'; 
+import { listarUsuariosAction, excluirUsuarioAction } from '@/lib/actions/admin'; 
 import styles from './Usuarios.module.css';
 
 // Interface que define o formato exato que vamos usar na tela

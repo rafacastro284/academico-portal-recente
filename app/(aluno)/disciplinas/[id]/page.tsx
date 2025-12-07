@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation'; 
 import Link from 'next/link';
-import { getDetalhesDisciplinaAction } from '@/lib/actions'; 
+import { getDetalhesDisciplinaAction } from '@/lib/actions/aluno'; 
 import styles from './Disciplina.module.css';
 
 // Tipagem do que vamos exibir na tela

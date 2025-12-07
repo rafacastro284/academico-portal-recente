@@ -3,11 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "./CadastrarDisciplina.module.css";
-import {
-  listarProfessoresAction,
-  listarTurmasAction, 
-  cadastrarDisciplinaComVinculoAction,  
-} from '@/lib/actions'; // Verifique o caminho se ele mudou para '@/lib/actions'
+import { 
+  listarProfessoresAction, 
+  cadastrarDisciplinaComVinculoAction 
+} from '@/lib/actions/diretoria';
+
+import { 
+  listarTurmasAction 
+} from '@/lib/actions/secretaria';
 
 export default function CadastrarDisciplina() {
   const [nome, setNome] = useState("");
@@ -20,45 +23,39 @@ export default function CadastrarDisciplina() {
   const [professores, setProfessores] = useState<any[]>([]);
   const [turmas, setTurmas] = useState<any[]>([]); 
 
-// --- Em CadastrarDisciplina.tsx > useEffect ---
-// --- Em CadastrarDisciplina.tsx (Bloco useEffect completo) ---
-useEffect(() => {
-    async function loadData() {
-        setIsLoading(true);
-        setMessage("Carregando dados necessários...");
-        let successCount = 0;
+  // --- Em CadastrarDisciplina.tsx (Bloco useEffect completo) ---
+  useEffect(() => {
+      async function loadData() {
+          setIsLoading(true);
+          setMessage("Carregando dados necessários...");
+          let successCount = 0;
 
-        // 1. CARREGAR PROFESSORES
-        const profRes = await listarProfessoresAction(); 
-        if (profRes.success && profRes.data) {
-            setProfessores(profRes.data);
-            console.log("Professores carregados com sucesso. Total:", profRes.data.length); 
-            successCount++;
-        } else {
-            // Se falhar, defina a mensagem para o usuário
-            setMessage(`❌ Erro ao carregar professores: ${profRes.error}`); 
-            console.error("ERRO FRONTEND: Falha na Action listarProfessores:", profRes.error); 
-        }
+          // 1. CARREGAR PROFESSORES (Vem de diretoria.ts)
+          const profRes = await listarProfessoresAction(); 
+          if (profRes.success && profRes.data) {
+              setProfessores(profRes.data);
+              successCount++;
+          } else {
+              setMessage(`❌ Erro ao carregar professores: ${profRes.error}`); 
+          }
 
-        // 2. CARREGAR TURMAS
-        const turmaRes = await listarTurmasAction();
-        if (turmaRes.success && turmaRes.data) {
-            setTurmas(turmaRes.data);
-            console.log("Turmas carregadas com sucesso. Total:", turmaRes.data.length); 
-            successCount++;
-        } else {
-            // Se falhar, defina a mensagem para o usuário
-            setMessage(`❌ Erro ao carregar turmas: ${turmaRes.error}`); 
-            console.error("ERRO FRONTEND: Falha na Action listarTurmas:", turmaRes.error); 
-        }
-        
-        setIsLoading(false);
-        if (successCount === 2) {
-             setMessage(""); // Limpa mensagem se ambos carregaram
-        }
-    }
-    loadData();
-}, []); // O array de dependências vazio garante que roda apenas uma vez
+          // 2. CARREGAR TURMAS (Vem de secretaria.ts)
+          const turmaRes = await listarTurmasAction();
+          if (turmaRes.success && turmaRes.data) {
+              setTurmas(turmaRes.data);
+              successCount++;
+          } else {
+              setMessage(`❌ Erro ao carregar turmas: ${turmaRes.error}`); 
+          }
+          
+          setIsLoading(false);
+          if (successCount === 2) {
+               setMessage(""); 
+          }
+      }
+      loadData();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -67,11 +64,11 @@ useEffect(() => {
     // Validação de inputs
     if (!turmaId || !professorId || !nome || cargaHoraria <= 0) {
         setIsLoading(false);
-        setMessage("❌ Erro: Preencha todos os campos obrigatórios (Turma, Professor, Nome e Carga Horária).");
+        setMessage("❌ Erro: Preencha todos os campos obrigatórios.");
         return;
     }
     
-    // MUDANÇA: Chamada da Action Transacional Única
+    // Chamada da Action Transacional (Vem de diretoria.ts)
     const res = await cadastrarDisciplinaComVinculoAction({
       nome_disciplina: nome,
       idprofessor: Number(professorId), 
@@ -154,7 +151,7 @@ useEffect(() => {
           />
         </div>
 
-        {/* Turma (AGORA OBRIGATÓRIO) */}
+        {/* Turma */}
         <div className={styles.inputGroup}>
           <label htmlFor="turma">Vincular à Turma</label>
           <select 

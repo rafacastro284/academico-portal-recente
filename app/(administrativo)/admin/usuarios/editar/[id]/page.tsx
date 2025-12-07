@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 // ❌ REMOVIDO: import { getUsuarioPorId } from '@/lib/data';
 // ✅ ADICIONADO: Usamos a action segura que criamos no actions.ts
-import { buscarUsuarioPorIdAction, atualizarUsuarioAction, excluirUsuarioAction } from '@/lib/actions';
+import { buscarUsuarioPorIdAction, atualizarUsuarioAction, excluirUsuarioAction } from '@/lib/actions/admin';
 import styles from './EditUsuario.module.css'; 
 
 export default function EditUsuario() {
