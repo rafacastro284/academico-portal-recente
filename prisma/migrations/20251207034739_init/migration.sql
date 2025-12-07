@@ -13,11 +13,11 @@ CREATE TABLE "turmadisciplina" (
 -- CreateTable
 CREATE TABLE "usuario" (
     "idusuario" SERIAL NOT NULL,
-    "cpf" VARCHAR(14),
-    "matricula" VARCHAR(20),
-    "nome" VARCHAR(100),
-    "email" VARCHAR(100),
-    "senha" VARCHAR(255),
+    "cpf" TEXT,
+    "matricula" TEXT,
+    "nome" TEXT,
+    "email" TEXT,
+    "senha" TEXT,
     "tipo" "tipo_usuario" NOT NULL,
 
     CONSTRAINT "usuario_pkey" PRIMARY KEY ("idusuario")
@@ -27,7 +27,7 @@ CREATE TABLE "usuario" (
 CREATE TABLE "disciplina" (
     "iddisciplina" SERIAL NOT NULL,
     "idprofessor" INTEGER NOT NULL,
-    "nome_disciplina" VARCHAR(100),
+    "nome_disciplina" TEXT,
     "carga_horaria" INTEGER,
 
     CONSTRAINT "disciplina_pkey" PRIMARY KEY ("iddisciplina")
@@ -36,11 +36,11 @@ CREATE TABLE "disciplina" (
 -- CreateTable
 CREATE TABLE "turma" (
     "idturma" SERIAL NOT NULL,
-    "nome_turma" VARCHAR(50),
+    "nome_turma" TEXT,
     "ano_letivo" INTEGER,
     "limite_vagas" INTEGER,
-    "serie" VARCHAR(50),
-    "turno" VARCHAR(30),
+    "serie" TEXT,
+    "turno" TEXT,
 
     CONSTRAINT "turma_pkey" PRIMARY KEY ("idturma")
 );
@@ -68,7 +68,7 @@ CREATE TABLE "frequencia" (
 CREATE TABLE "nota" (
     "idnota" SERIAL NOT NULL,
     "idalunodisciplina" INTEGER NOT NULL,
-    "descricao" VARCHAR(200),
+    "descricao" TEXT,
     "valor" DECIMAL(5,2),
     "data" DATE,
 
@@ -79,7 +79,7 @@ CREATE TABLE "nota" (
 CREATE TABLE "tarefa" (
     "idtarefa" SERIAL NOT NULL,
     "iddisciplina" INTEGER NOT NULL,
-    "tipo" VARCHAR(50),
+    "tipo" TEXT,
     "descricao" TEXT,
 
     CONSTRAINT "tarefa_pkey" PRIMARY KEY ("idtarefa")

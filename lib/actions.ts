@@ -1,4 +1,4 @@
-'use server'; // <--- OBRIGATÓRIO NA PRIMEIRA LINHA
+'use server';
 
 import { prisma } from "@/lib/prisma";
 import { tipo_usuario } from "@prisma/client";
@@ -12,7 +12,16 @@ import bcrypt from 'bcryptjs';
 export async function loginAction(dados: { cpf: string; senha: string }) {
   console.log("--- LOGIN ---", dados.cpf);
   try {
-    const usuario = await prisma.usuario.findUnique({ where: { cpf: dados.cpf } });
+    const usuario = await prisma.usuario.findUnique({ 
+        where: { cpf: dados.cpf },
+        select: { 
+            idusuario: true, 
+            senha: true, 
+            tipo: true, 
+            nome: true 
+        }
+    });
+
     if (!usuario) return { success: false, error: "CPF não encontrado." };
 
     const senhaBanco = usuario.senha || '';
@@ -26,12 +35,14 @@ export async function loginAction(dados: { cpf: string; senha: string }) {
 
     if (!senhaValida) return { success: false, error: "Senha incorreta." };
 
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     cookieStore.set('portal_usuario_id', String(usuario.idusuario), {
       httpOnly: true, path: '/', maxAge: 86400 
     });
 
-    return { success: true, usuario };
+    const { senha, ...usuarioData } = usuario;
+    
+    return { success: true, usuario: usuarioData };
   } catch (error) { 
     console.error(error);
     return { success: false, error: "Erro interno." }; 
@@ -40,6 +51,7 @@ export async function loginAction(dados: { cpf: string; senha: string }) {
 
 // =========================================================
 // 1. ADMINISTRAÇÃO (Usuários CRUD)
+// ... (Mantidas as funções de CRUD de usuário) ...
 // =========================================================
 export async function cadastrarUsuarioAction(dados: any) {
   try {
@@ -89,7 +101,6 @@ export async function atualizarUsuarioAction(id: number, dados: any) {
 
 export async function excluirUsuarioAction(id: number) {
   try {
-    // Limpeza de dependências antes de excluir
     await prisma.matriculaturma.deleteMany({ where: { idusuario: id } });
     await prisma.alunodisciplina.deleteMany({ where: { idaluno: id } });
     await prisma.usuario.delete({ where: { idusuario: id } });
@@ -98,23 +109,21 @@ export async function excluirUsuarioAction(id: number) {
   } catch (e) { return { success: false, error: "Possui vínculos ou erro interno." }; }
 }
 
+
 // =========================================================
-// 3. PROFESSOR (Dashboard, Frequência, Notas)
+// 3. PROFESSOR (Dashboard e Listagem de Alunos)
 // =========================================================
 
 export async function getDashboardProfessorAction(idProfessor: number) {
   try {
     const vinculos = await prisma.turmadisciplina.findMany({
-      where: { 
-        disciplina: { idprofessor: idProfessor } 
-      },
+      where: { disciplina: { idprofessor: idProfessor } },
       include: { 
         turma: true, 
         disciplina: { include: { alunodisciplina: true } } 
       }
     });
 
-    // Otimização para buscar o nome do professor apenas uma vez
     const professor = await prisma.usuario.findUnique({ where: { idusuario: idProfessor }, select: { nome: true } });
 
     const turmasFormatadas = vinculos.map((v) => ({
@@ -144,38 +153,40 @@ export async function getDashboardProfessorAction(idProfessor: number) {
   }
 }
 
-// 🎯 Ação Corrigida: Removido o filtro complexo da Turma que estava falhando.
+// Ação de Listar Alunos (Mantida com média como string)
 export async function getAlunosDaTurmaAction(turmaId: number, disciplinaId: number) {
   try {
-    const alunosVinculados = await prisma.alunodisciplina.findMany({
-      where: {
-        iddisciplina: disciplinaId,
-        // 🚨 CORREÇÃO: Removido o filtro `usuario: { matriculaturma: { some: { idturma: turmaId } } }`
-        // Buscamos apenas os alunos inscritos na Disciplina. A `MatriculaTurma` é verificada
-        // no momento da sincronização.
-      },
-      // Inclui os relacionamentos necessários para formatar a lista:
-      include: { 
-        usuario: { select: { idusuario: true, nome: true, matricula: true } }, 
-        nota: true, 
-        frequencia: true 
-      },
-      orderBy: { usuario: { nome: 'asc' } }
-    });
-
     const turmaInfo = await prisma.turma.findUnique({ where: { idturma: turmaId } });
     const discInfo = await prisma.disciplina.findUnique({ where: { iddisciplina: disciplinaId } });
 
+    if (!turmaInfo || !discInfo) {
+      return { success: true, data: { turma: null, disciplina: null, alunos: [] } };
+    }
+
+    const alunosVinculados = await prisma.alunodisciplina.findMany({
+      where: {
+        iddisciplina: disciplinaId,
+        aluno: { matriculaturma: { some: { idturma: turmaId } } }
+      },
+      include: { 
+        aluno: { select: { idusuario: true, nome: true, matricula: true } }, 
+        nota: true, 
+        frequencia: true 
+      },
+      orderBy: { aluno: { nome: 'asc' } }
+    });
+
     const alunosFormatados = alunosVinculados.map((ad) => {
       const somaNotas = ad.nota.reduce((acc, n) => acc + Number(n.valor || 0), 0);
-      const media = ad.nota.length > 0 ? (somaNotas / ad.nota.length).toFixed(1) : "-";
-      const faltas = ad.frequencia.reduce((acc, f) => acc + (f.faltas || 0), 0);
+      // Retorna STRING formatada ou "-"
+      const media = ad.nota.length > 0 ? (somaNotas / ad.nota.length).toFixed(1) : "-"; 
+      const faltas = ad.frequencia.reduce((acc, f) => acc + (Number(f.faltas) || 0), 0);
 
       return {
         idAlunoDisciplina: ad.idalunodisciplina,
         idAluno: ad.idaluno,
-        nome: ad.usuario.nome,
-        matricula: ad.usuario.matricula,
+        nome: ad.aluno.nome, 
+        matricula: ad.aluno.matricula,
         mediaAtual: media,
         faltas: faltas
       };
@@ -184,86 +195,190 @@ export async function getAlunosDaTurmaAction(turmaId: number, disciplinaId: numb
     return {
       success: true,
       data: {
-        turma: turmaInfo?.nome_turma,
-        disciplina: discInfo?.nome_disciplina,
+        turma: turmaInfo.nome_turma,
+        disciplina: discInfo.nome_disciplina,
         alunos: alunosFormatados
       }
     };
   } catch (error) { 
-    console.error("❌ Erro na getAlunosDaTurmaAction:", error); // Log detalhado do erro
+    console.error("❌ Erro na getAlunosDaTurmaAction:", error); 
     return { success: false, error: "Erro ao buscar alunos." }; 
   }
 }
 
+// 🆕 NOVO: Ação para carregar dados para o formulário de Lançar Notas
+export async function getDadosLancamentoNotasAction(alunoIdDisciplina: number) {
+  try {
+    const vinculo = await prisma.alunodisciplina.findUnique({
+      where: { idalunodisciplina: alunoIdDisciplina },
+      include: {
+        aluno: { select: { nome: true, matricula: true } },
+        disciplina: { select: { nome_disciplina: true } },
+        nota: { orderBy: { data: 'asc' } } // Busca as notas já lançadas
+      }
+    });
+
+    if (!vinculo) {
+      return { success: false, error: "Vínculo aluno/disciplina não encontrado." };
+    }
+
+    const notasExistentes = vinculo.nota.map(n => ({
+      descricao: n.descricao,
+      valor: n.valor,
+      idNota: n.idnota,
+      data: n.data
+    }));
+    
+    // Calcula a média atual
+    const somaNotas = notasExistentes.reduce((acc, n) => acc + Number(n.valor || 0), 0);
+    const mediaAtual = notasExistentes.length > 0 ? (somaNotas / notasExistentes.length).toFixed(1) : "-";
+
+    return {
+      success: true,
+      data: {
+        aluno: {
+          nome: vinculo.aluno.nome,
+          matricula: vinculo.aluno.matricula,
+        },
+        disciplina: vinculo.disciplina.nome_disciplina,
+        notas: notasExistentes,
+        mediaAtual: mediaAtual,
+      }
+    };
+  } catch (error) {
+    console.error("❌ Erro ao buscar dados de notas:", error);
+    return { success: false, error: "Erro ao carregar dados de notas." };
+  }
+}
+
+// 🆕 NOVO: Ação para carregar dados para o formulário de Lançar Frequência
+export async function getDadosLancamentoFrequenciaAction(alunoIdDisciplina: number, dataConsulta: string) {
+  try {
+    const data = new Date(dataConsulta);
+
+    const vinculo = await prisma.alunodisciplina.findUnique({
+      where: { idalunodisciplina: alunoIdDisciplina },
+      include: {
+        aluno: { select: { nome: true, matricula: true } },
+        disciplina: { select: { nome_disciplina: true } },
+      }
+    });
+
+    if (!vinculo) {
+      return { success: false, error: "Vínculo aluno/disciplina não encontrado." };
+    }
+    
+    // Busca a frequência lançada para a data específica
+    const frequenciaDoDia = await prisma.frequencia.findFirst({
+        where: { idalunodisciplina: alunoIdDisciplina, data: data }
+    });
+    
+    const statusAtual = frequenciaDoDia && frequenciaDoDia.faltas !== null ? (frequenciaDoDia.faltas === 0 ? 'P' : 'F') : 'N/A';
+    
+    // Busca o histórico de faltas do aluno na disciplina (opcional, mas útil)
+    const totalFaltas = await prisma.frequencia.aggregate({
+        _sum: { faltas: true },
+        where: { idalunodisciplina: alunoIdDisciplina }
+    });
+    
+    return {
+      success: true,
+      data: {
+        aluno: {
+          nome: vinculo.aluno.nome,
+          matricula: vinculo.aluno.matricula,
+        },
+        disciplina: vinculo.disciplina.nome_disciplina,
+        statusAtual: statusAtual, // 'P', 'F', ou 'N/A'
+        totalFaltas: totalFaltas._sum.faltas || 0,
+      }
+    };
+
+  } catch (error) {
+    console.error("❌ Erro ao buscar dados de frequência:", error);
+    return { success: false, error: "Erro ao carregar dados de frequência." };
+  }
+}
+
+// =========================================================
+// 4. PROFESSOR (Ações de Lançamento - Mantidas)
+// =========================================================
 export async function lancarFrequenciaAction(dados: {
   disciplinaId: number;
   data: string;
   registros: { idAlunoDisciplina: number; status: 'P' | 'F' }[]
 }) {
-  try {
-    const dataFrequencia = new Date(dados.data);
-    const idsVinculos = dados.registros.map(r => r.idAlunoDisciplina);
-
-    await prisma.$transaction([
-      // Remove lançamentos anteriores nesta data
-      prisma.frequencia.deleteMany({
-        where: { idalunodisciplina: { in: idsVinculos }, data: dataFrequencia }
-      }),
-      // Cria novos
-      ...dados.registros.map((reg) => 
-        prisma.frequencia.create({
-          data: {
-            idalunodisciplina: reg.idAlunoDisciplina,
-            data: dataFrequencia,
-            faltas: reg.status === 'F' ? 1 : 0
-          }
-        })
-      )
-    ]);
-    return { success: true };
-  } catch (error) { return { success: false, error: "Erro ao salvar." }; }
+    // ... (Mantido, para salvar frequência em lote)
+    try {
+        const dataFrequencia = new Date(dados.data);
+        const idsVinculos = dados.registros.map(r => r.idAlunoDisciplina);
+    
+        await prisma.$transaction([
+          prisma.frequencia.deleteMany({
+            where: { idalunodisciplina: { in: idsVinculos }, data: dataFrequencia }
+          }),
+          ...dados.registros.map((reg) => 
+            prisma.frequencia.create({
+              data: {
+                idalunodisciplina: reg.idAlunoDisciplina,
+                data: dataFrequencia,
+                faltas: reg.status === 'F' ? 1 : 0
+              }
+            })
+          )
+        ]);
+        revalidatePath('/aluno/dashboard'); 
+        revalidatePath('/professor/turma/[turmaid]/alunos'); // Revalida a lista de alunos para atualizar faltas
+        return { success: true };
+      } catch (error) { return { success: false, error: "Erro ao salvar." }; }
 }
 
 export async function lancarNotasAction(dados: {
   descricaoAvaliacao: string;
   notas: { idAlunoDisciplina: number; valor: number }[]
 }) {
-  try {
-    await prisma.$transaction(async (tx) => {
-      for (const notaItem of dados.notas) {
-        const notaExistente = await tx.nota.findFirst({
-          where: {
-            idalunodisciplina: notaItem.idAlunoDisciplina,
-            descricao: dados.descricaoAvaliacao
+    // ... (Mantido, para salvar notas em lote/atualizar)
+    try {
+        await prisma.$transaction(async (tx) => {
+          for (const notaItem of dados.notas) {
+            const notaExistente = await tx.nota.findFirst({
+              where: {
+                idalunodisciplina: notaItem.idAlunoDisciplina,
+                descricao: dados.descricaoAvaliacao
+              }
+            });
+    
+            if (notaExistente) {
+              await tx.nota.update({
+                where: { idnota: notaExistente.idnota },
+                data: { valor: notaItem.valor, data: new Date() }
+              });
+            } else {
+              await tx.nota.create({
+                data: {
+                  idalunodisciplina: notaItem.idAlunoDisciplina,
+                  descricao: dados.descricaoAvaliacao,
+                  valor: notaItem.valor,
+                  data: new Date()
+                }
+              });
+            }
           }
         });
-
-        if (notaExistente) {
-          await tx.nota.update({
-            where: { idnota: notaExistente.idnota },
-            data: { valor: notaItem.valor, data: new Date() }
-          });
-        } else {
-          await tx.nota.create({
-            data: {
-              idalunodisciplina: notaItem.idAlunoDisciplina,
-              descricao: dados.descricaoAvaliacao,
-              valor: notaItem.valor,
-              data: new Date()
-            }
-          });
-        }
-      }
-    });
-    return { success: true };
-  } catch (error) { return { success: false, error: "Erro ao salvar notas." }; }
+        revalidatePath('/aluno/dashboard'); 
+        revalidatePath('/professor/turma/[turmaid]/alunos'); // Revalida a lista de alunos para atualizar médias
+        return { success: true };
+      } catch (error) { return { success: false, error: "Erro ao salvar notas." }; }
 }
 
+// ... (Restante das actions de exclusão e Secretaria/Diretoria) ...
+
+// =========================================================
+// 5. PROFESSOR (Exclusão)
+// =========================================================
 export async function excluirLancamentoFrequenciaAction(disciplinaId: number, dataRegistro: string) {
   try {
     const data = new Date(dataRegistro);
-
-    // Encontra todos os vínculos AlunoDisciplina para a disciplina
     const vinculos = await prisma.alunodisciplina.findMany({
       where: { iddisciplina: disciplinaId },
       select: { idalunodisciplina: true }
@@ -271,7 +386,6 @@ export async function excluirLancamentoFrequenciaAction(disciplinaId: number, da
     
     const idsVinculos = vinculos.map(v => v.idalunodisciplina);
 
-    // Exclui a frequência para a data e vínculos encontrados
     const resultado = await prisma.frequencia.deleteMany({
       where: {
         idalunodisciplina: { in: idsVinculos },
@@ -280,16 +394,18 @@ export async function excluirLancamentoFrequenciaAction(disciplinaId: number, da
     });
 
     revalidatePath('/professor/dashboard'); 
+    revalidatePath('/professor/turma/[turmaid]/alunos'); 
+    revalidatePath('/aluno/dashboard'); 
+    
     return { success: true, count: resultado.count };
   } catch (error) {
     console.error("Erro ao excluir frequência:", error);
     return { success: false, error: "Erro ao excluir o lançamento de frequência." };
   }
 }
-// --- 3. PROFESSOR (Excluir Nota) ---
+
 export async function excluirNotaAction(disciplinaId: number, descricaoAvaliacao: string) {
   try {
-    // Encontra todos os vínculos AlunoDisciplina para a disciplina
     const vinculos = await prisma.alunodisciplina.findMany({
       where: { iddisciplina: disciplinaId },
       select: { idalunodisciplina: true }
@@ -297,7 +413,6 @@ export async function excluirNotaAction(disciplinaId: number, descricaoAvaliacao
     
     const idsVinculos = vinculos.map(v => v.idalunodisciplina);
 
-    // Exclui as notas com a descrição especificada
     const resultado = await prisma.nota.deleteMany({
       where: {
         idalunodisciplina: { in: idsVinculos },
@@ -306,6 +421,8 @@ export async function excluirNotaAction(disciplinaId: number, descricaoAvaliacao
     });
 
     revalidatePath('/professor/dashboard'); 
+    revalidatePath('/professor/turma/[turmaid]/alunos');
+    revalidatePath('/aluno/dashboard'); 
     
     return { success: true, count: resultado.count };
   } catch (error) {
@@ -313,111 +430,10 @@ export async function excluirNotaAction(disciplinaId: number, descricaoAvaliacao
     return { success: false, error: "Erro ao excluir as notas da avaliação." };
   }
 }
-
-// =========================================================
-// 4. ALUNO (Dashboard e Detalhes)
-// =========================================================
-// ... (Nenhuma alteração necessária aqui)
-export async function getDashboardAlunoAction(idAluno: number) {
-  try {
-    const aluno = await prisma.usuario.findUnique({
-      where: { idusuario: idAluno },
-      include: {
-        matriculaturma: { include: { turma: true } },
-        alunodisciplina: {
-          include: {
-            disciplina: { include: { professor: true } },
-            nota: true,
-            frequencia: true,
-          }
-        }
-      }
-    });
-
-    if (!aluno) return { success: false, error: "Aluno não encontrado" };
-
-    const nomeTurma = aluno.matriculaturma[0]?.turma?.nome_turma || "Não enturmado";
-    let somaMedias = 0, qtdMedias = 0, somaFreq = 0, qtdFreq = 0;
-
-    const disciplinas = aluno.alunodisciplina.map((ad) => {
-      const somaNotas = ad.nota.reduce((acc, n) => acc + Number(n.valor || 0), 0);
-      const mediaNum = ad.nota.length > 0 ? (somaNotas / ad.nota.length) : 0;
-      if (ad.nota.length > 0) { somaMedias += mediaNum; qtdMedias++; }
-
-      const faltas = ad.frequencia.reduce((acc, f) => acc + (f.faltas || 0), 0);
-      const freqNum = Math.max(0, 100 - faltas);
-      somaFreq += freqNum; qtdFreq++;
-
-      const nomeProf = ad.disciplina.professor?.nome || "Prof.";
-
-      return {
-        id: ad.disciplina.iddisciplina,
-        nome: ad.disciplina.nome_disciplina,
-        professor: nomeProf,
-        media: ad.nota.length > 0 ? mediaNum.toFixed(1) : "-",
-        frequencia: `${freqNum}%`
-      };
-    });
-
-    const mediaGeral = qtdMedias > 0 ? (somaMedias / qtdMedias).toFixed(1) : "-";
-    const frequenciaGeral = qtdFreq > 0 ? Math.round(somaFreq / qtdFreq) + "%" : "100%";
-
-    return {
-      success: true,
-      data: {
-        nome: aluno.nome, cpf: aluno.cpf, turma: nomeTurma,
-        mediaGeral, frequenciaGeral,
-        totalDisciplinas: disciplinas.length,
-        disciplinas
-      }
-    };
-  } catch (error) { 
-    console.error(error);
-    return { success: false, error: "Erro." }; 
-  }
-}
-
-export async function getDetalhesDisciplinaAction(idDisciplina: number) {
-  try {
-    const cookieStore = await cookies();
-    const userIdCookie = cookieStore.get('portal_usuario_id');
-    if (!userIdCookie) return { success: false, error: "Logar" };
-    
-    const idAluno = Number(userIdCookie.value);
-    const vinculo = await prisma.alunodisciplina.findFirst({
-      where: { idaluno: idAluno, iddisciplina: idDisciplina },
-      include: {
-        disciplina: { include: { professor: true } }, 
-        nota: { orderBy: { data: 'asc' } },
-        frequencia: { orderBy: { data: 'desc' } }
-      }
-    });
-
-    if (!vinculo) return { success: false, error: "Não encontrada" };
-
-    const totalNotas = vinculo.nota.reduce((acc, n) => acc + Number(n.valor || 0), 0);
-    const media = vinculo.nota.length > 0 ? (totalNotas / vinculo.nota.length).toFixed(1) : "-";
-    const faltas = vinculo.frequencia.reduce((acc, f) => acc + (f.faltas || 0), 0);
-    const freq = Math.max(0, 100 - faltas);
-    const nomeProf = vinculo.disciplina.professor?.nome || "";
-
-    return {
-      success: true,
-      data: {
-        nomeDisciplina: vinculo.disciplina.nome_disciplina,
-        professor: nomeProf,
-        notas: vinculo.nota,
-        frequencias: vinculo.frequencia,
-        resumo: { media, faltas, porcentagemFreq: `${freq}%` }
-      }
-    };
-  } catch (e) { return { success: false, error: "Erro" }; }
-}
-
 // =========================================================
 // 5. SECRETARIO (Dashboard)
-// =========================================================
 // ... (Nenhuma alteração necessária aqui)
+// =========================================================
 export async function getDashboardSecretarioAction(idUsuario: number) {
   try {
     const usuario = await prisma.usuario.findUnique({
@@ -454,8 +470,8 @@ export async function getDashboardSecretarioAction(idUsuario: number) {
 
 // =========================================================
 // 6. SECRETARIA: CADASTRAR TURMA (Transacional)
-// =========================================================
 // ... (Nenhuma alteração necessária aqui)
+// =========================================================
 export async function cadastrarTurmaAction(dados: {
   nome_turma: string;
   serie: string;
@@ -497,7 +513,7 @@ export async function cadastrarTurmaAction(dados: {
         });
       }
       
-      return turmaCriada; // Retorna apenas a turma criada
+      return turmaCriada;
     });
 
     if (dados.alunosIds.length > 0) {
@@ -537,8 +553,8 @@ export async function getDadosCadastroTurmaAction() {
 
 // =========================================================
 // 7. DIRETOR/SECRETARIA (Listagem de Dados)
-// =========================================================
 // ... (Nenhuma alteração necessária aqui)
+// =========================================================
 export async function listarProfessoresAction() {
   try {
     const professores = await prisma.usuario.findMany({
@@ -586,8 +602,8 @@ export async function listarDisciplinasAction() {
 
 // =========================================================
 // 8. DIRETOR: CADASTRAR DISCIPLINA (Transacional)
-// =========================================================
 // ... (Nenhuma alteração necessária aqui)
+// =========================================================
 export async function cadastrarDisciplinaComVinculoAction(dados: {
   nome_disciplina: string;
   idprofessor: number;
@@ -619,7 +635,6 @@ export async function cadastrarDisciplinaComVinculoAction(dados: {
     
     // --- PASSO 3: INSCREVER ALUNOS (FORA DA TRANSAÇÃO) ---
     try {
-      // OBRIGATÓRIO: Chamada para sincronizar a matrícula do aluno na disciplina
       await inscreverAlunosDaTurmaEmDisciplinaAction({
         disciplinaId: resultadoTransacao.iddisciplina,
         turmaId: dados.turmaId
@@ -628,7 +643,6 @@ export async function cadastrarDisciplinaComVinculoAction(dados: {
 
     } catch (e) {
       console.error("Aviso: Falha ao inscrever alunos após criar disciplina:", e);
-      // Mantemos o fluxo principal (a disciplina e o vínculo Turma-Disciplina estão salvos)
     }
 
     revalidatePath('/diretor/disciplinas'); 
@@ -644,8 +658,8 @@ export async function cadastrarDisciplinaComVinculoAction(dados: {
 
 // =========================================================
 // 9. SINCRONIZAÇÃO DE MATRÍCULA (Ação Chave)
-// =========================================================
 // ... (Nenhuma alteração necessária aqui)
+// =========================================================
 export async function inscreverAlunosDaTurmaEmDisciplinaAction(dados: {
   disciplinaId: number;
   turmaId: number;
@@ -666,7 +680,7 @@ export async function inscreverAlunosDaTurmaEmDisciplinaAction(dados: {
 
     // 2. Preparar os dados para a tabela alunodisciplina
     const dadosInscricao = alunosIds.map(idAluno => ({
-      idaluno: idAluno, // Assumindo que idaluno na AlunoDisciplina é o idusuario
+      idaluno: idAluno,
       iddisciplina: dados.disciplinaId,
     }));
 
@@ -685,10 +699,12 @@ export async function inscreverAlunosDaTurmaEmDisciplinaAction(dados: {
   }
 }
 
+export { inscreverAlunosDaTurmaEmDisciplinaAction };
+
 // =========================================================
-// LEGACY ACTIONS (Manter caso haja dependências antigas)
-// =========================================================
+// LEGACY ACTIONS
 // ... (Nenhuma alteração necessária aqui)
+// =========================================================
 export async function cadastrarDisciplinaAction(dados: {
   nome_disciplina: string;
   idprofessor: number;
@@ -712,14 +728,12 @@ export async function vincularDisciplinaTurmaAction(dados: { disciplinaId: numbe
     return { success: true };
   } catch (error) { return { success: false, error: "Falha ao criar o vínculo." }; }
 }
-// =========================================================
-// LISTAR DISCIPLINAS COM PROFESSOR
-// =========================================================
+
 export async function listarDisciplinasComProfessorAction() {
   try {
     const disciplinas = await prisma.disciplina.findMany({
       include: {
-        professor: true  // usuario do tipo professor
+        professor: true 
       },
       orderBy: { nome_disciplina: "asc" }
     });
