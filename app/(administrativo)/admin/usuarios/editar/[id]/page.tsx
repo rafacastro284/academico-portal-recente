@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-// ❌ REMOVIDO: import { getUsuarioPorId } from '@/lib/data';
-// ✅ ADICIONADO: Usamos a action segura que criamos no actions.ts
+import { tipo_usuario } from "@prisma/client"; 
 import { buscarUsuarioPorIdAction, atualizarUsuarioAction, excluirUsuarioAction } from '@/lib/actions/admin';
 import styles from './EditUsuario.module.css'; 
 
@@ -12,10 +11,8 @@ export default function EditUsuario() {
   const router = useRouter();
   const params = useParams();
   
-  // Converte o ID da URL para número
   const userId = Number(params?.id);
 
-  // Estados do formulário
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [perfil, setPerfil] = useState('aluno');
@@ -26,13 +23,11 @@ export default function EditUsuario() {
   const [message, setMessage] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 1. Carrega os dados do usuário usando a Server Action
   useEffect(() => {
     async function carregarDados() {
       if (!userId) return;
 
       try {
-        // ✅ AQUI MUDOU: Chamamos a action em vez da função direta do banco
         const resultado = await buscarUsuarioPorIdAction(userId);
 
         if (resultado.success && resultado.data) {
@@ -56,17 +51,17 @@ export default function EditUsuario() {
     carregarDados();
   }, [userId]);
 
-  // 2. Função de Atualizar (Salvar)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
     setIsLoading(true);
     
+    // 👇 2. CORREÇÃO AQUI: "as tipo_usuario" garante ao TypeScript que a string é válida
     const payload = {
       nome,
       cpf,
       email,
-      tipo: perfil,
+      tipo: perfil as tipo_usuario, 
       matricula: matricula || null,
     };
 
@@ -83,7 +78,7 @@ export default function EditUsuario() {
     }
   };
 
-  // 3. Função de Excluir
+  // ... (o restante da função handleDelete e return continua igual)
   const handleDelete = async () => {
     if (!window.confirm("Tem certeza que deseja EXCLUIR este usuário? Essa ação não pode ser desfeita.")) {
       return;
@@ -125,36 +120,21 @@ export default function EditUsuario() {
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
+          {/* ... Inputs iguais ao anterior ... */}
           
           <div className={styles.inputGroup}>
             <label htmlFor="nome">Nome Completo</label>
-            <input
-              type="text"
-              id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              required
-            />
+            <input type="text" id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
           </div>
 
           <div className={styles.inputGroup}>
             <label htmlFor="cpf">CPF</label>
-            <input
-              type="text"
-              id="cpf"
-              value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
-              required
-            />
+            <input type="text" id="cpf" value={cpf} onChange={(e) => setCpf(e.target.value)} required />
           </div>
 
           <div className={styles.inputGroup}>
             <label htmlFor="perfil">Perfil</label>
-            <select 
-              id="perfil" 
-              value={perfil} 
-              onChange={(e) => setPerfil(e.target.value)}
-            >
+            <select id="perfil" value={perfil} onChange={(e) => setPerfil(e.target.value)}>
               <option value="aluno">Aluno</option>
               <option value="professor">Professor</option>
               <option value="secretario">Secretário</option>
@@ -163,45 +143,24 @@ export default function EditUsuario() {
             </select>
           </div>
           
-          {/* Mostra campo de matrícula apenas se for aluno */}
           {perfil === 'aluno' && (
             <div className={styles.inputGroup}>
               <label htmlFor="matricula">Matrícula</label>
-              <input
-                type="text"
-                id="matricula"
-                value={matricula}
-                onChange={(e) => setMatricula(e.target.value)}
-              />
+              <input type="text" id="matricula" value={matricula} onChange={(e) => setMatricula(e.target.value)} />
             </div>
           )}
           
           <div className={styles.inputGroup}>
             <label htmlFor="email">E-mail</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
 
-          <button 
-            type="submit" 
-            className={styles.submitButton}
-            disabled={isLoading || isDeleting}
-          >
+          <button type="submit" className={styles.submitButton} disabled={isLoading || isDeleting}>
             {isLoading ? 'Salvando...' : 'Salvar Alterações'}
           </button>
 
           {message && (
-             <p style={{ 
-               marginTop: '15px', 
-               color: message.includes('Erro') ? 'red' : 'green', 
-               fontWeight: 'bold', 
-               textAlign: 'center' 
-             }}>
+             <p style={{ marginTop: '15px', color: message.includes('Erro') ? 'red' : 'green', fontWeight: 'bold', textAlign: 'center' }}>
                {message}
              </p>
           )}

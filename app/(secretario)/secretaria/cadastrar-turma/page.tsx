@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react'; // MUDANÇA: useEffect adicionado
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './CadastrarTurma.module.css';
 
-// MUDANÇA: Importar as actions
-import { cadastrarTurmaAction, getDadosCadastroTurmaAction } from '@/lib/actions';
+// Importar as actions
+import { cadastrarTurmaAction, getDadosCadastroTurmaAction } from '@/lib/actions/secretaria';
 
 const mockSeries = [
   "6º Ano - Ens. Fundamental",
@@ -22,24 +22,25 @@ export default function CadastrarTurma() {
   const router = useRouter();
   
   // Estados do formulário
-  const [nomeTurma, setNomeTurma] = useState(''); // MUDANÇA: Adicionado input para Nome da Turma se não houver
+  const [nomeTurma, setNomeTurma] = useState(''); 
   const [serie, setSerie] = useState(''); 
   const [turno, setTurno] = useState('');
-  const [disciplinaId, setDisciplinaId] = useState(''); // MUDANÇA: De professorId para disciplinaId
+  const [disciplinaId, setDisciplinaId] = useState(''); 
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear().toString());
-  const [limiteVagas, setLimiteVagas] = useState('30'); // Opcional
+  // 👇 O estado já existia aqui
+  const [limiteVagas, setLimiteVagas] = useState('30'); 
   
   // Estados de dados e UI
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true); // MUDANÇA: Estado de carregamento
+  const [loading, setLoading] = useState(true); 
   
   // Estados para busca de alunos
   const [alunoSearch, setAlunoSearch] = useState('');
-  const [selectedAlunos, setSelectedAlunos] = useState<number[]>([]); // MUDANÇA: Array de números (IDs)
-  const [dbAlunos, setDbAlunos] = useState<any[]>([]); // Dados reais do banco
-  const [dbDisciplinas, setDbDisciplinas] = useState<any[]>([]); // Dados reais do banco
+  const [selectedAlunos, setSelectedAlunos] = useState<number[]>([]); 
+  const [dbAlunos, setDbAlunos] = useState<any[]>([]); 
+  const [dbDisciplinas, setDbDisciplinas] = useState<any[]>([]); 
 
-  // MUDANÇA: Carregar dados reais ao montar o componente
+  // Carregar dados reais ao montar o componente
   useEffect(() => {
     async function loadData() {
       const res = await getDadosCadastroTurmaAction();
@@ -55,7 +56,6 @@ export default function CadastrarTurma() {
   }, []);
 
   // Lógica de filtro de alunos
-  // Nota: Filtra apenas na busca visual, mas mantém todos disponíveis
   const filteredAlunos = dbAlunos.filter(aluno => 
     aluno.nome.toLowerCase().includes(alunoSearch.toLowerCase()) ||
     (aluno.matricula && aluno.matricula.includes(alunoSearch))
@@ -75,14 +75,9 @@ export default function CadastrarTurma() {
     e.preventDefault();
     setMessage('');
     
-    // MUDANÇA: Validação básica
     if (!nomeTurma) { 
-        // Se você não tiver um campo input para nome, gere um automático:
-        // const autoNome = `${serie} - ${turno}`;
         alert("Preencha o nome da turma"); return;
     }
-
-    console.log("--- ENVIANDO PARA O SERVER ACTION ---");
 
     const response = await cadastrarTurmaAction({
       nome_turma: nomeTurma,
@@ -90,8 +85,8 @@ export default function CadastrarTurma() {
       turno: turno,
       ano_letivo: parseInt(anoLetivo),
       limite_vagas: parseInt(limiteVagas),
-      disciplinaId: parseInt(disciplinaId), // O ID da disciplina principal/regente
-      alunosIds: selectedAlunos // Array de números
+      disciplinaId: parseInt(disciplinaId), 
+      alunosIds: selectedAlunos 
     });
 
     if (response.success) {
@@ -115,7 +110,7 @@ export default function CadastrarTurma() {
       <form className={styles.card} onSubmit={handleSubmit}>
         <h1 className={styles.formTitle}>Cadastrar Nova Turma</h1>
         
-        {/* Nome da Turma (Campo Novo sugerido) */}
+        {/* Nome da Turma */}
         <div className={styles.inputGroup}>
           <label htmlFor="nomeTurma">Nome da Turma</label>
           <input 
@@ -156,7 +151,6 @@ export default function CadastrarTurma() {
         {/* Professor/Disciplina Responsável */}
         <div className={styles.inputGroup}>
           <label htmlFor="disciplina">Disciplina / Professor Regente</label>
-          {/* MUDANÇA: O value agora é o ID da DISCIPLINA, pois é o que liga a tabela N:N */}
           <select id="disciplina" value={disciplinaId} onChange={(e) => setDisciplinaId(e.target.value)} required>
             <option value="" disabled>Selecione a disciplina principal</option>
             {dbDisciplinas.map(disc => (
@@ -175,6 +169,19 @@ export default function CadastrarTurma() {
             id="anoLetivo"
             value={anoLetivo}
             onChange={(e) => setAnoLetivo(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* 👇 ADICIONADO: Campo de Limite de Vagas */}
+        <div className={styles.inputGroup}>
+          <label htmlFor="limiteVagas">Limite de Vagas</label>
+          <input
+            type="number"
+            id="limiteVagas"
+            value={limiteVagas}
+            onChange={(e) => setLimiteVagas(e.target.value)}
+            min="1"
             required
           />
         </div>

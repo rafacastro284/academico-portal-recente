@@ -74,3 +74,44 @@ export async function inscreverAlunosDaTurmaEmDisciplinaAction(dados: { discipli
       return { success: true, count: resultado.count };
     } catch (error) { return { success: false, error: "Falha na inscrição." }; }
 }
+export async function getDashboardDiretorAction(idUsuario: number) {
+  try {
+    const diretor = await prisma.usuario.findUnique({
+      where: { idusuario: idUsuario },
+      select: { nome: true }
+    });
+
+    if (!diretor) return { success: false, error: "Usuário não encontrado." };
+
+    // Executa todas as consultas em paralelo para ser rápido
+    const [totalAlunos, totalProfessores, totalTurmas, mediaGeralAgg] = await prisma.$transaction([
+      prisma.usuario.count({ where: { tipo: 'aluno' } }),
+      prisma.usuario.count({ where: { tipo: 'professor' } }),
+      prisma.turma.count(),
+      prisma.nota.aggregate({
+        _avg: { valor: true }
+      })
+    ]);
+
+    // Trata a média (pode ser null se não houver notas)
+    const mediaFormatada = mediaGeralAgg._avg.valor 
+      ? Number(mediaGeralAgg._avg.valor).toFixed(1) 
+      : "0.0";
+
+    return {
+      success: true,
+      data: {
+        nome: diretor.nome,
+        stats: {
+          alunos: totalAlunos,
+          professores: totalProfessores,
+          turmas: totalTurmas,
+          mediaGeral: mediaFormatada
+        }
+      }
+    };
+  } catch (error) {
+    console.error("Erro dashboard diretor:", error);
+    return { success: false, error: "Erro ao carregar dados." };
+  }
+}

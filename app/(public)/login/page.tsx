@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginAction } from '@/lib/actions'; // Importa a action do backend
+import { loginAction } from '@/lib/actions/auth'; // Importa a action do backend
 import styles from './Login.module.css';
 
 export default function Login() {

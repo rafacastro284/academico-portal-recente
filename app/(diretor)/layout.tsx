@@ -1,63 +1,40 @@
-"use client";
-
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import styles from "./DiretorLayout.module.css";
-import { useEffect, useState } from "react";
+// 👇 Importe a nova action
+import { getDashboardDiretorAction } from "@/lib/actions/diretoria";
 
-const IconAluno = () => <>👨‍🎓</>;
-const IconProfessor = () => <>👩‍🏫</>;
-const IconTurma = () => <>🏫</>;
-const IconMedia = () => <>📊</>;
+const IconAluno = () => <span>👨‍🎓</span>;
+const IconProfessor = () => <span>👩‍🏫</span>;
+const IconTurma = () => <span>🏫</span>;
+const IconMedia = () => <span>📊</span>;
 
-export default function DiretorLayout({
+export default async function DiretorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [header, setHeader] = useState({
-    nome: "Diretor",
-  });
+  // 1. Autenticação (Server Side)
+  const cookieStore = await cookies();
+  const userIdCookie = cookieStore.get("portal_usuario_id");
 
-  const [summary, setSummary] = useState({
+  if (!userIdCookie) {
+    redirect("/login");
+  }
+
+  // 2. Busca de Dados via Server Action
+  const idDiretor = Number(userIdCookie.value);
+  const resultado = await getDashboardDiretorAction(idDiretor);
+
+  // Valores padrão caso dê erro
+  const nomeDiretor = resultado.success ? resultado.data?.nome : "Diretor";
+  const stats = resultado.success && resultado.data ? resultado.data.stats : {
     alunos: 0,
     professores: 0,
     turmas: 0,
-    mediaGeral: 0,
-  });
-
-  // ---- Buscar dados reais do backend ----
-  useEffect(() => {
-    async function loadData() {
-      try {
-        // Contagem de alunos
-        const alunosRes = await fetch("/api/diretor/total-alunos");
-        const alunosJson = await alunosRes.json();
-
-        // Contagem de professores
-        const profRes = await fetch("/api/diretor/total-professores");
-        const profJson = await profRes.json();
-
-        // Contagem de turmas
-        const turmasRes = await fetch("/api/diretor/total-turmas");
-        const turmasJson = await turmasRes.json();
-
-        // Média geral
-        const mediaRes = await fetch("/api/notas/media-geral");
-        const mediaJson = await mediaRes.json();
-
-        setSummary({
-          alunos: alunosJson.total ?? 0,
-          professores: profJson.total ?? 0,
-          turmas: turmasJson.total ?? 0,
-          mediaGeral: mediaJson.media ?? 0,
-        });
-      } catch (error) {
-        console.error("Erro ao carregar dados do dashboard:", error);
-      }
-    }
-
-    loadData();
-  }, []);
+    mediaGeral: "0.0"
+  };
 
   return (
     <div className={styles.layoutWrapper}>
@@ -67,43 +44,51 @@ export default function DiretorLayout({
         {/* -- Card de Info do Diretor -- */}
         <div className={`${styles.card} ${styles.headerCard}`}>
           <div>
-            <h1>Olá, {header.nome}</h1>
+            <h1>Olá, {nomeDiretor}</h1>
+            <p>Painel Administrativo</p>
           </div>
-          <Link href="/login">
-            <button className={styles.logoutButton}>Sair</button>
-          </Link>
+          
+          {/* Botão de Logout via Server Action inline */}
+          <form action={async () => {
+            'use server';
+            const c = await cookies();
+            c.delete('portal_usuario_id');
+            redirect('/login');
+          }}>
+             <button className={styles.logoutButton}>Sair</button>
+          </form>
         </div>
 
         {/* -- Cards de Resumo Rápido -- */}
         <div className={styles.summaryGrid}>
           <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconAluno /></div>
+            <div className={styles.iconWrapper} style={{backgroundColor: '#e0f2fe'}}><IconAluno /></div>
             <div>
-              <strong>{summary.alunos}</strong>
+              <strong>{stats.alunos}</strong>
               <p>Alunos</p>
             </div>
           </div>
 
           <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconProfessor /></div>
+            <div className={styles.iconWrapper} style={{backgroundColor: '#fce7f3'}}><IconProfessor /></div>
             <div>
-              <strong>{summary.professores}</strong>
+              <strong>{stats.professores}</strong>
               <p>Professores</p>
             </div>
           </div>
 
           <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconTurma /></div>
+            <div className={styles.iconWrapper} style={{backgroundColor: '#dcfce7'}}><IconTurma /></div>
             <div>
-              <strong>{summary.turmas}</strong>
+              <strong>{stats.turmas}</strong>
               <p>Turmas</p>
             </div>
           </div>
 
           <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconMedia /></div>
+            <div className={styles.iconWrapper} style={{backgroundColor: '#f3e8ff'}}><IconMedia /></div>
             <div>
-              <strong>{summary.mediaGeral}</strong>
+              <strong>{stats.mediaGeral}</strong>
               <p>Média Geral</p>
             </div>
           </div>

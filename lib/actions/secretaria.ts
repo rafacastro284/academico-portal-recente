@@ -60,3 +60,39 @@ export async function listarTurmasAction() {
       return { success: true, data: turmas };
     } catch (error) { return { success: false, error: "Erro ao buscar." }; }
 }
+export async function listarAlunosComTurmaAction() {
+  try {
+    // Busca usuários do tipo aluno e inclui a turma mais recente (se houver)
+    const alunos = await prisma.usuario.findMany({
+      where: { tipo: 'aluno' },
+      include: {
+        matriculaturma: {
+          include: { turma: true },
+          take: 1, // Assume a matrícula mais recente
+          orderBy: { idmatriculaturma: 'desc' }
+        }
+      },
+      orderBy: { nome: 'asc' }
+    });
+
+    // Formata os dados para o Frontend
+    const dadosFormatados = alunos.map(aluno => {
+      const turmaAtual = aluno.matriculaturma[0]?.turma;
+      
+      return {
+        id: aluno.idusuario,
+        nome: aluno.nome || "Sem Nome",
+        matricula: aluno.matricula || "N/A",
+        // Se tiver turma, pega os dados, senão define padrão
+        turma: turmaAtual?.nome_turma || "Não Matriculado",
+        serie: turmaAtual?.serie || "-",
+        status: turmaAtual ? "Cursando" : "Pendente"
+      };
+    });
+
+    return { success: true, data: dadosFormatados };
+  } catch (error) {
+    console.error("Erro ao listar alunos:", error);
+    return { success: false, error: "Erro ao buscar lista de alunos." };
+  }
+}
