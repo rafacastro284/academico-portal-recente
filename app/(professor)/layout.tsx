@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buscarUsuarioPorIdAction, getDashboardProfessorAction } from '@/lib/actions';
+import { buscarUsuarioPorIdAction, getDashboardProfessorAction } from '@/lib/actions/professor';
 import styles from './ProfessorLayout.module.css';
 
 const IconTurmas = () => <>🏫</>;
