@@ -142,10 +142,15 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
             porcentagemFreq: porcentagemFreq // Adicionada a porcentagem que faltava no seu original
         },
         notas: vinculo.nota.map(n => ({
-          idnota: n.idnota, descricao: n.descricao, valor: n.valor, data: n.data
+          idnota: n.idnota, 
+          descricao: n.descricao, 
+          valor: Number(n.valor), 
+          data: n.data
         })),
         frequencias: frequenciasComFaltas.map(f => ({
-          idfrequencia: f.idfrequencia, data: f.data, faltas: f.faltas
+          idfrequencia: f.idfrequencia, 
+          data: f.data, 
+          faltas: Number(f.faltas)
         }))
       }
     };

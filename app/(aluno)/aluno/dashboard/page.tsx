@@ -9,8 +9,6 @@ const IconChart = () => <>📊</>;
 const IconCheck = () => <>✅</>;
 
 export default async function DashboardAluno() {
-
-  // 1. Pega o cookie com await (obrigatório no Next 15)
   const cookieStore = await cookies();
   const userIdCookie = cookieStore.get('portal_usuario_id');
 
@@ -18,30 +16,29 @@ export default async function DashboardAluno() {
     redirect('/login');
   }
 
-  // 2. Busca dados
   const idAluno = Number(userIdCookie.value);
   const resultado = await getDashboardAlunoAction(idAluno);
 
   if (!resultado.success || !resultado.data) {
-    return <div className={styles.pageWrapper}><p>Erro ao carregar dados. Faça login novamente.</p></div>;
+    return (
+      <div className={styles.pageWrapper}>
+        <p>Erro ao carregar dados. Faça login novamente.</p>
+      </div>
+    );
   }
 
-  // 3. A CORREÇÃO ESTÁ AQUI:
-  // Adicionamos 'frequenciaGeral' na lista de variáveis extraídas (destructuring)
   const { 
     nome, 
     cpf, 
     turma, 
     mediaGeral, 
-    frequenciaGeral, // <--- Isso faltava no seu arquivo, por isso o erro!
+    frequenciaGeral,
     totalDisciplinas, 
     disciplinas 
   } = resultado.data;
 
   return (
     <div className={styles.pageWrapper}>
-      
-      {/* Header */}
       <div className={styles.mainCard}>
         <header className={styles.header}>
           <div>
@@ -52,12 +49,12 @@ export default async function DashboardAluno() {
             </p>
             <p className={styles.matricula}>CPF: {cpf}</p>
           </div>
-          <Link href="/login"><button className={styles.logoutButton}>Sair</button></Link>
+          <Link href="/login">
+            <button className={styles.logoutButton}>Sair</button>
+          </Link>
         </header>
 
-        {/* --- Grid de Resumo --- */}
         <div className={styles.summaryGrid}>
-          
           <div className={styles.summaryCard}>
             <div className={styles.iconWrapper} style={{ backgroundColor: '#E0F2FE' }}>
               <IconBook />
@@ -83,16 +80,13 @@ export default async function DashboardAluno() {
               <IconCheck />
             </div>
             <div>
-              {/* Agora vai funcionar porque declaramos lá em cima */}
               <strong>{frequenciaGeral}</strong>
               <p>Frequência</p>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* Lista de Disciplinas */}
       <div className={styles.disciplinasCard}>
         <h2 className={styles.disciplinasTitle}>Minhas Disciplinas</h2>
         
@@ -104,7 +98,11 @@ export default async function DashboardAluno() {
           )}
 
           {disciplinas.map((d: any) => (
-            <Link key={d.id} href={`/aluno/disciplinas/${d.id}`} className={styles.subjectCardLink}>
+            <Link 
+              key={d.id} 
+              href={`/aluno/disciplinas/${d.id}`} 
+              className={styles.subjectCardLink}
+            >
               <div className={styles.subjectCard}>
                 <div className={styles.subjectCardHeader}>
                   <h3>{d.nome}</h3>
