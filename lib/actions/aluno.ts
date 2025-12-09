@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from 'next/headers';
 
-// ==================== DASHBOARD DO ALUNO ====================
+// DASHBOARD DO ALUNO
 export async function getDashboardAlunoAction(idAluno: number) {
   try {
     const aluno = await prisma.usuario.findUnique({
@@ -22,7 +22,6 @@ export async function getDashboardAlunoAction(idAluno: number) {
       include: {
         disciplina: { 
           include: { 
-            // CORREÇÃO: No seu schema é 'professor', não 'usuario'
             professor: { select: { nome: true } } 
           } 
         },
@@ -50,7 +49,6 @@ export async function getDashboardAlunoAction(idAluno: number) {
       return {
         id: m.iddisciplina,
         nome: m.disciplina.nome_disciplina,
-        // CORREÇÃO: m.disciplina.professor
         professor: m.disciplina.professor?.nome || "Sem Professor",
         media: m.nota.length > 0 ? mediaNumerica.toFixed(1) : "-",
         frequencia: `${faltasDisc} faltas`
@@ -78,7 +76,7 @@ export async function getDashboardAlunoAction(idAluno: number) {
   }
 }
 
-// ==================== DETALHES DA DISCIPLINA (VISÃO DO ALUNO) ====================
+// DETALHES DA DISCIPLINA (VISÃO DO ALUNO)
 export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
   try {
     // 1. Autenticação: Pegar ID do Aluno pelo Cookie
@@ -134,12 +132,11 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
       success: true,
       data: {
         nomeDisciplina: vinculo.disciplina.nome_disciplina,
-        // CORREÇÃO: vinculo.disciplina.professor
         professor: vinculo.disciplina.professor?.nome,
         resumo: { 
             media: mediaCalculada, 
             faltas: totalFaltas, 
-            porcentagemFreq: porcentagemFreq // Adicionada a porcentagem que faltava no seu original
+            porcentagemFreq: porcentagemFreq 
         },
         notas: vinculo.nota.map(n => ({
           idnota: n.idnota, 

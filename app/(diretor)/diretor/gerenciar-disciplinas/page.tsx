@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import styles from './GerenciarDisciplinas.module.css';
 import { listarDisciplinasAction, excluirDisciplinaAction } from '@/lib/actions/diretoria';
 
-const IconExcluir = () => <>🗑️</>;
-
 interface TurmaVinculada {
   turma: {
     idturma: number;
@@ -33,11 +31,9 @@ export default function GerenciarDisciplinas() {
   const [loading, setLoading] = useState(true);
   const [excluindo, setExcluindo] = useState<number | null>(null);
   
-  // Filtros
   const [busca, setBusca] = useState('');
   const [professorSel, setProfessorSel] = useState('todos');
   
-  // Carregar disciplinas
   useEffect(() => {
     carregarDisciplinas();
   }, []);
@@ -48,7 +44,6 @@ export default function GerenciarDisciplinas() {
       const res = await listarDisciplinasAction();
       
       if (res.success && res.data) {
-        // Formatar os dados corretamente
         const disciplinasFormatadas: Disciplina[] = res.data.map((disciplina: any) => ({
           iddisciplina: disciplina.iddisciplina,
           nome_disciplina: disciplina.nome_disciplina || "Disciplina sem nome",
@@ -70,15 +65,8 @@ export default function GerenciarDisciplinas() {
     }
   }
 
-  // Função para editar disciplina
   const handleEditarDisciplina = (disciplinaId: number) => {
-    // Redireciona para a página de edição de disciplina
     router.push(`/diretor/disciplinas/editar/${disciplinaId}`);
-  };
-
-  // Função para ver detalhes da disciplina
-  const handleVerDetalhes = (disciplinaId: number) => {
-    router.push(`/diretor/disciplinas/${disciplinaId}`);
   };
 
   const handleExcluir = async (disciplinaId: number, nomeDisciplina: string) => {
@@ -112,7 +100,6 @@ export default function GerenciarDisciplinas() {
     }
   };
 
-  // Filtros
   const professoresUnicos = [...new Set(
     disciplinas
       .map(d => d.professor?.nome)
@@ -140,7 +127,6 @@ export default function GerenciarDisciplinas() {
 
       <h1 className={styles.title}>Gerenciar Disciplinas</h1>
 
-      {/* Filtros */}
       <div className={styles.filterBar}>
         <div style={{ flex: 2 }}>
           <label htmlFor="busca">Buscar por Nome ou Professor:</label>
@@ -169,7 +155,6 @@ export default function GerenciarDisciplinas() {
         </div>
       </div>
 
-      {/* Tabela de Disciplinas */}
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
@@ -177,14 +162,13 @@ export default function GerenciarDisciplinas() {
               <th>Disciplina</th>
               <th>Professor</th>
               <th>Turmas</th>
-              <th>Carga Horária</th>
               <th>Ações</th>
             </tr>
           </thead>
           <tbody>
             {filteredDisciplinas.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
+                <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
                   {disciplinas.length === 0 ? 'Nenhuma disciplina cadastrada' : 'Nenhuma disciplina encontrada com esses filtros'}
                 </td>
               </tr>
@@ -211,7 +195,6 @@ export default function GerenciarDisciplinas() {
                       <span className={styles.semTurmas}>Sem turmas</span>
                     )}
                   </td>
-                  <td>{disciplina.carga_horaria ? `${disciplina.carga_horaria}h` : 'Não definida'}</td>
                   <td className={styles.actions}>
                     <button 
                       onClick={() => handleExcluir(disciplina.iddisciplina, disciplina.nome_disciplina)} 
@@ -219,7 +202,7 @@ export default function GerenciarDisciplinas() {
                       disabled={excluindo === disciplina.iddisciplina}
                       title="Excluir disciplina"
                     >
-                      <IconExcluir /> {excluindo === disciplina.iddisciplina ? 'Excluindo...' : 'Excluir'}
+                      {excluindo === disciplina.iddisciplina ? 'Excluindo...' : 'Excluir'}
                     </button>
                   </td>
                 </tr>

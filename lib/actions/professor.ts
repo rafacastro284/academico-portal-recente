@@ -3,9 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-// =========================================================
 // 1. DASHBOARD DO PROFESSOR
-// =========================================================
 export async function getDashboardProfessorAction(idProfessor: number) {
   try {
     const vinculos = await prisma.turmadisciplina.findMany({
@@ -54,9 +52,7 @@ export async function getDashboardProfessorAction(idProfessor: number) {
   }
 }
 
-// =========================================================
 // 2. LISTA DE ALUNOS (Com Notas Detalhadas)
-// =========================================================
 export async function getAlunosDaTurmaAction(turmaId: number, disciplinaId: number) {
   try {
     const turmaInfo = await prisma.turma.findUnique({ where: { idturma: turmaId } });
@@ -119,9 +115,7 @@ export async function getAlunosDaTurmaAction(turmaId: number, disciplinaId: numb
   }
 }
 
-// =========================================================
 // 3. FREQUÊNCIA
-// =========================================================
 export async function getDadosLancamentoFrequenciaListaAction(turmaId: number, disciplinaId: number, dataConsulta: string) {
   try {
     const data = new Date(dataConsulta);
@@ -205,9 +199,7 @@ export async function lancarFrequenciaAction(dados: {
   }
 }
 
-// =========================================================
 // 4. LANÇAMENTO DE NOTAS EM LOTE (NOVO)
-// =========================================================
 export async function lancarNotasEmLoteAction(dados: { 
   descricaoAvaliacao: string; 
   notas: { idAlunoDisciplina: number; valor: number }[] 
@@ -252,9 +244,7 @@ export async function lancarNotasEmLoteAction(dados: {
   }
 }
 
-// =========================================================
 // 5. EXCLUIR NOTAS
-// =========================================================
 export async function excluirNotaAction(idNota: number) {
   try {
     await prisma.nota.delete({ where: { idnota: idNota } });
@@ -263,5 +253,49 @@ export async function excluirNotaAction(idNota: number) {
   } catch (error) {
     console.error("Erro excluirNotaAction:", error);
     return { success: false, error: "Erro ao excluir nota." };
+  }
+}
+
+// 6. LANÇAMENTO DE NOTA INDIVIDUAL
+export async function lancarNotaAction(dados: { 
+  idAlunoDisciplina: number; 
+  descricaoAvaliacao: string; 
+  valor: number;
+}) {
+  try {
+    // Verifica se já existe nota com essa descrição para esse aluno
+    const notaExistente = await prisma.nota.findFirst({
+      where: { 
+        idalunodisciplina: dados.idAlunoDisciplina, 
+        descricao: dados.descricaoAvaliacao 
+      }
+    });
+
+    if (notaExistente) {
+      // Atualiza nota existente
+      await prisma.nota.update({
+        where: { idnota: notaExistente.idnota },
+        data: { 
+          valor: dados.valor,
+          data: new Date()
+        }
+      });
+    } else {
+      // Cria nova nota
+      await prisma.nota.create({
+        data: {
+          idalunodisciplina: dados.idAlunoDisciplina,
+          descricao: dados.descricaoAvaliacao,
+          valor: dados.valor,
+          data: new Date()
+        }
+      });
+    }
+
+    revalidatePath('/professor/turma/[turmaid]/alunos');
+    return { success: true };
+  } catch (error) {
+    console.error("Erro lancarNotaAction:", error);
+    return { success: false, error: "Erro ao salvar nota." };
   }
 }

@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation'; // Necessário para o Logout
+import { redirect } from 'next/navigation'; 
 import { getDashboardProfessorAction } from '@/lib/actions/professor';
-// 👇 CORREÇÃO 1: Importando a busca de usuário do local correto (admin)
+// Importando a busca de usuário do local correto (admin)
 import { buscarUsuarioPorIdAction } from '@/lib/actions/admin'; 
 import styles from './ProfessorLayout.module.css';
 
@@ -71,7 +71,7 @@ export default async function ProfessorLayout({
             <p>Olá, <strong>{nomeProfessor}</strong></p>
           </div>
           
-          {/* 👇 CORREÇÃO 2: Logout real que apaga o cookie */}
+          {/* Logout real que apaga o cookie */}
           <form action={async () => {
             'use server';
             const c = await cookies();

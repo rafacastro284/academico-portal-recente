@@ -4,17 +4,24 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function listarProfessoresAction() {
-    try {
-      const professores = await prisma.usuario.findMany({
-        where: { tipo: 'professor' },
-        select: { idusuario: true, nome: true },
-        orderBy: { nome: 'asc' },
-      });
-      return { success: true, data: professores };
-    } catch (error) { 
-      console.error("Erro ao listar professores:", error);
-      return { success: false, error: "Erro ao buscar professores." }; 
-    }
+  try {
+    const professores = await prisma.usuario.findMany({
+      where: { tipo: 'professor' },
+      select: {
+        idusuario: true,
+        nome: true
+      },
+      orderBy: { nome: 'asc' }
+    });
+
+    return {
+      success: true,
+      data: professores
+    };
+  } catch (error) {
+    console.error("Erro ao listar professores:", error);
+    return { success: false, error: "Erro ao listar professores" };
+  }
 }
 
 export async function listarDisciplinasAction() {
@@ -136,6 +143,27 @@ export async function cadastrarDisciplinaComVinculoAction(dados: {
   }
 }
 
+export async function buscarTurmaPorIdAction(idTurma: number) {
+  try {
+    const turma = await prisma.turma.findUnique({
+      where: { idturma: idTurma }
+    });
+
+    if (!turma) {
+      return { success: false, error: "Turma não encontrada" };
+    }
+
+    return {
+      success: true,
+      data: turma
+    };
+  } catch (error) {
+    console.error("Erro ao buscar turma:", error);
+    return { success: false, error: "Erro ao buscar turma" };
+  }
+}
+
+
 export async function getDashboardDiretorAction(idUsuario: number) {
   try {
     const diretor = await prisma.usuario.findUnique({
@@ -174,7 +202,7 @@ export async function getDashboardDiretorAction(idUsuario: number) {
   }
 }
 
-// ==================== LISTAR ALUNOS COM FREQUÊNCIA ====================
+// LISTAR ALUNOS COM FREQUÊNCIA
 export async function listarAlunosComTurmaEAcoesAction() {
   try {
     // Buscar todos os alunos
@@ -262,7 +290,7 @@ export async function listarAlunosComTurmaEAcoesAction() {
   }
 }
 
-// ==================== EXCLUIR DISCIPLINA ====================
+// EXCLUIR DISCIPLINA
 export async function excluirDisciplinaAction(disciplinaId: number) {
   try {
     await prisma.$transaction(async (tx) => {
@@ -324,7 +352,46 @@ export async function excluirDisciplinaAction(disciplinaId: number) {
   }
 }
 
-// ==================== LISTAR PROFESSORES COM DISCIPLINAS ====================
+export async function excluirProfessorAction(idProfessor: number) {
+  try {
+    await prisma.usuario.delete({
+      where: { idusuario: idProfessor }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao excluir professor:", error);
+    return { success: false, error: "Erro ao excluir professor. Verifique se não há vínculos ativos." };
+  }
+}
+
+export async function excluirTurmaAction(idTurma: number) {
+  try {
+    await prisma.turma.delete({
+      where: { idturma: idTurma }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao excluir turma:", error);
+    return { success: false, error: "Erro ao excluir turma. Verifique se não há alunos matriculados." };
+  }
+}
+
+export async function excluirAlunoAction(idAluno: number) {
+  try {
+    await prisma.usuario.delete({
+      where: { idusuario: idAluno }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao excluir aluno:", error);
+    return { success: false, error: "Erro ao excluir aluno." };
+  }
+}
+
+// LISTAR PROFESSORES COM DISCIPLINAS
 export async function listarProfessoresComDisciplinasAction() {
   try {
     const professores = await prisma.usuario.findMany({
@@ -379,7 +446,7 @@ export async function listarProfessoresComDisciplinasAction() {
   }
 }
 
-// ==================== LISTAR TURMAS PARA DIRETOR (simplificado) ====================
+// LISTAR TURMAS PARA DIRETOR (simplificado)
 export async function listarTurmasParaDiretorAction() {
   try {
     const turmas = await prisma.turma.findMany({
@@ -427,7 +494,7 @@ export async function listarTurmasParaDiretorAction() {
   }
 }
 
-// ==================== BUSCAR DISCIPLINA POR PROFESSOR ====================
+// BUSCAR DISCIPLINA POR PROFESSOR
 export async function buscarDisciplinasPorProfessorAction(professorId: number) {
   try {
     const disciplinas = await prisma.disciplina.findMany({
@@ -449,12 +516,42 @@ export async function buscarDisciplinasPorProfessorAction(professorId: number) {
   }
 }
 
-// ==================== ATUALIZAR DISCIPLINA ====================
+export async function atualizarTurmaAction(dados: {
+  idturma: number;
+  nome_turma: string;
+  serie: string;
+  turno: string;
+  ano_letivo: number | null;
+  limite_vagas: number | null;
+}) {
+  try {
+    const turmaAtualizada = await prisma.turma.update({
+      where: { idturma: dados.idturma },
+      data: {
+        nome_turma: dados.nome_turma,
+        serie: dados.serie,
+        turno: dados.turno,
+        ano_letivo: dados.ano_letivo,
+        limite_vagas: dados.limite_vagas
+      }
+    });
+
+    return {
+      success: true,
+      data: turmaAtualizada
+    };
+  } catch (error) {
+    console.error("Erro ao atualizar turma:", error);
+    return { success: false, error: "Erro ao atualizar turma" };
+  }
+}
+
+// ATUALIZAR DISCIPLINA
 export async function atualizarDisciplinaAction(dados: {
   iddisciplina: number;
   nome_disciplina: string;
-  idprofessor?: number;
-  carga_horaria?: number;
+  idprofessor: number;
+  carga_horaria: number | null;
 }) {
   try {
     const disciplinaAtualizada = await prisma.disciplina.update({
@@ -466,11 +563,69 @@ export async function atualizarDisciplinaAction(dados: {
       }
     });
 
-    revalidatePath("/diretor/gerenciar-disciplinas");
-    revalidatePath("/diretor/dashboard");
-    return { success: true, data: disciplinaAtualizada };
+    return {
+      success: true,
+      data: disciplinaAtualizada
+    };
   } catch (error) {
-    console.error("Erro atualizarDisciplinaAction:", error);
-    return { success: false, error: "Erro ao atualizar disciplina." };
+    console.error("Erro ao atualizar disciplina:", error);
+    return { success: false, error: "Erro ao atualizar disciplina" };
+  }
+}
+
+export async function buscarDisciplinaPorIdAction(idDisciplina: number) {
+  try {
+    const disciplina = await prisma.disciplina.findUnique({
+      where: { iddisciplina: idDisciplina },
+      include: {
+        professor: {
+          select: { nome: true }
+        }
+      }
+    });
+
+    if (!disciplina) {
+      return { success: false, error: "Disciplina não encontrada" };
+    }
+
+    return {
+      success: true,
+      data: disciplina
+    };
+  } catch (error) {
+    console.error("Erro ao buscar disciplina:", error);
+    return { success: false, error: "Erro ao buscar disciplina" };
+  }
+}
+
+export async function getRelatorioCompletoAction() {
+  try {
+    // Obter dados do dashboard
+    const dashboardRes = await getDashboardDiretorAction(0); // 0 será substituído pelo ID real
+    
+    // Obter listas completas
+    const [turmasRes, professoresRes, disciplinasRes, alunosRes] = await Promise.all([
+      listarTurmasParaDiretorAction(),
+      listarProfessoresComDisciplinasAction(),
+      listarDisciplinasAction(),
+      listarAlunosComTurmaEAcoesAction()
+    ]);
+
+    return {
+      success: true,
+      data: {
+        stats: dashboardRes.success ? dashboardRes.data?.stats : null,
+        turmas: turmasRes.success ? turmasRes.data : [],
+        professores: professoresRes.success ? professoresRes.data : [],
+        disciplinas: disciplinasRes.success ? disciplinasRes.data : [],
+        alunos: alunosRes.success ? alunosRes.data?.alunos : []
+      }
+    };
+  } catch (error) {
+    console.error('Erro ao gerar relatório completo:', error);
+    return {
+      success: false,
+      error: 'Erro ao gerar relatório completo'
+    };
   }
 }

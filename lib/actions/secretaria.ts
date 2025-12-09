@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-// ==================== DASHBOARD ====================
+// DASHBOARD
 export async function getDashboardSecretarioAction(idUsuario: number) {
   try {
     const usuario = await prisma.usuario.findUnique({ 
@@ -41,7 +41,7 @@ export async function getDashboardSecretarioAction(idUsuario: number) {
   }
 }
 
-// ==================== LISTAR ALUNOS ====================
+// LISTAR ALUNOS
 export async function listarAlunosComTurmaAction() {
   try {
     const alunos = await prisma.usuario.findMany({
@@ -77,7 +77,7 @@ export async function listarAlunosComTurmaAction() {
   }
 }
 
-// ==================== LISTAR TURMAS ====================
+// LISTAR TURMAS
 export async function listarTurmasAction() {
   try {
     const turmas = await prisma.turma.findMany({
@@ -123,7 +123,7 @@ export async function listarTurmasAction() {
   }
 }
 
-// ==================== BUSCAR TURMA POR ID ====================
+// BUSCAR TURMA POR ID
 export async function buscarTurmaPorIdAction(turmaId: number) {
   try {
     console.log(`🔍 Buscando turma ID: ${turmaId}`);
@@ -201,7 +201,7 @@ export async function buscarTurmaPorIdAction(turmaId: number) {
   }
 }
 
-// ==================== DADOS PARA CADASTRO DE TURMA ====================
+// DADOS PARA CADASTRO DE TURMA
 export async function getDadosCadastroTurmaAction() {
   try {
     const [disciplinas, professores, alunos] = await prisma.$transaction([
@@ -228,7 +228,7 @@ export async function getDadosCadastroTurmaAction() {
   }
 }
 
-// ==================== CADASTRAR TURMA ====================
+// CADASTRAR TURMA
 export async function cadastrarTurmaAction(dados: {
   nome_turma: string;
   serie: string;
@@ -278,7 +278,7 @@ export async function cadastrarTurmaAction(dados: {
   }
 }
 
-// ==================== ATUALIZAR TURMA ====================
+// ATUALIZAR TURMA
 export async function atualizarTurmaAction(dados: {
   turmaId: number;
   nome_turma: string;
@@ -388,7 +388,7 @@ export async function atualizarTurmaAction(dados: {
   }
 }
 
-// ==================== EXCLUIR TURMA ====================
+// EXCLUIR TURMA
 export async function excluirTurmaAction(turmaId: number) {
   try {
     await prisma.$transaction(async (tx) => {
@@ -422,7 +422,7 @@ export async function excluirTurmaAction(turmaId: number) {
   }
 }
 
-// ==================== LISTAR PROFESSORES ====================
+// LISTAR PROFESSORES
 export async function listarProfessoresAction() {
   try {
     // Buscar professores e suas disciplinas através da tabela disciplina
@@ -471,7 +471,7 @@ export async function listarProfessoresAction() {
   }
 }
 
-// ==================== LISTAR ALUNOS ====================
+// LISTAR ALUNOS
 export async function listarAlunosAction() {
   try {
     const alunos = await prisma.usuario.findMany({
@@ -493,7 +493,7 @@ export async function listarAlunosAction() {
   }
 }
 
-// ==================== DIAGNÓSTICO: VERIFICAR DISCIPLINAS DOS PROFESSORES ====================
+// DIAGNÓSTICO: VERIFICAR DISCIPLINAS DOS PROFESSORES
 export async function verificarDisciplinasProfessoresAction() {
   try {
     const professores = await prisma.usuario.findMany({

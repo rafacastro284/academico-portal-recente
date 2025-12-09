@@ -45,13 +45,6 @@ export default function AdminDashboard() {
             <h3>Visualizar Usuários</h3>
             <p>Ver e gerenciar todos os usuários cadastrados</p>
           </Link>
-
-          <Link href="/admin/relatorios" className={styles.card}>
-            <div className={styles.iconWrapper}><IconChart /></div>
-            <h3>Relatórios</h3>
-            <p>Gerar relatórios do sistema</p>
-          </Link>
-
         </div>
       </section>
     </div>

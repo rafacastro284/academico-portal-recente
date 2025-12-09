@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './GerenciarProfessores.module.css';
-import { listarProfessoresComDisciplinasAction } from '@/lib/actions/diretoria';
+import { listarProfessoresComDisciplinasAction, excluirProfessorAction } from '@/lib/actions/diretoria';
 
 interface Professor {
   idusuario: number;
@@ -18,50 +19,83 @@ interface Professor {
 }
 
 export default function GerenciarProfessoresDiretor() {
+  const router = useRouter();
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [excluindo, setExcluindo] = useState<number | null>(null);
   const [disciplinaSel, setDisciplinaSel] = useState('todas');
   const [busca, setBusca] = useState('');
 
-  // Carregar professores do banco de dados
   useEffect(() => {
-    async function carregarProfessores() {
-      try {
-        setLoading(true);
-        
-        const response = await listarProfessoresComDisciplinasAction();
-        
-        if (response.success && response.data) {
-          // Formatar os dados corretamente
-          const professoresFormatados: Professor[] = response.data.map((prof: any) => ({
-            idusuario: prof.idusuario,
-            nome: prof.nome || 'Sem nome',
-            cpf: prof.cpf || undefined,
-            matricula: prof.matricula || undefined,
-            email: prof.email || undefined,
-            disciplinas: prof.disciplinas || [],
-            turmas: prof.turmas || [],
-            totalDisciplinas: prof.totalDisciplinas || 0,
-            totalTurmas: prof.totalTurmas || 0
-          }));
-          
-          setProfessores(professoresFormatados);
-        } else {
-          console.error('Erro ao carregar professores:', response.error);
-          setProfessores([]);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar professores:', error);
-        setProfessores([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
     carregarProfessores();
   }, []);
 
-  // Filtros
+  async function carregarProfessores() {
+    try {
+      setLoading(true);
+      const response = await listarProfessoresComDisciplinasAction();
+      
+      if (response.success && response.data) {
+        const professoresFormatados: Professor[] = response.data.map((prof: any) => ({
+          idusuario: prof.idusuario,
+          nome: prof.nome || 'Sem nome',
+          cpf: prof.cpf || undefined,
+          matricula: prof.matricula || undefined,
+          email: prof.email || undefined,
+          disciplinas: prof.disciplinas || [],
+          turmas: prof.turmas || [],
+          totalDisciplinas: prof.totalDisciplinas || 0,
+          totalTurmas: prof.totalTurmas || 0
+        }));
+        
+        setProfessores(professoresFormatados);
+      } else {
+        console.error('Erro ao carregar professores:', response.error);
+        setProfessores([]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar professores:', error);
+      setProfessores([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleEditar = (professorId: number) => {
+    router.push(`/diretor/professores/editar/${professorId}`);
+  };
+
+  const handleExcluir = async (professorId: number, nomeProfessor: string) => {
+    const confirmacao = window.confirm(
+      `⚠️ ATENÇÃO: Exclusão Permanente\n\n` +
+      `Tem certeza que deseja EXCLUIR o professor:\n"${nomeProfessor}"?\n\n` +
+      `Esta ação é IRREVERSÍVEL e removerá:\n` +
+      `• Todas as disciplinas associadas\n` +
+      `• Todos os vínculos com turmas\n` +
+      `• Todas as notas e frequências registradas\n\n` +
+      `Clique em OK para confirmar ou Cancelar para desistir.`
+    );
+    
+    if (!confirmacao) return;
+    
+    try {
+      setExcluindo(professorId);
+      const resultado = await excluirProfessorAction(professorId);
+      
+      if (resultado.success) {
+        setProfessores(professores.filter(p => p.idusuario !== professorId));
+        alert(`✅ Professor "${nomeProfessor}" excluído com sucesso!`);
+      } else {
+        alert(`❌ Erro ao excluir: ${resultado.error || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Erro ao excluir professor:', error);
+      alert('❌ Erro ao excluir professor. Tente novamente.');
+    } finally {
+      setExcluindo(null);
+    }
+  };
+
   const filteredProfessores = professores
     .filter(prof => {
       const porDisciplina = disciplinaSel === 'todas' || 
@@ -78,7 +112,6 @@ export default function GerenciarProfessoresDiretor() {
     })
     .sort((a, b) => a.nome.localeCompare(b.nome));
 
-  // Extrair disciplinas únicas
   const disciplinasUnicas = [...new Set(
     professores.flatMap(p => p.disciplinas)
   )].filter(Boolean).sort();
@@ -99,7 +132,6 @@ export default function GerenciarProfessoresDiretor() {
 
       <h1 className={styles.title}>Gerenciar Professores</h1>
       
-      {/* Filtros */}
       <div className={styles.filterBar}>
         <div>
           <label htmlFor="filtroDisciplina">Filtrar por Matéria:</label>
@@ -110,7 +142,7 @@ export default function GerenciarProfessoresDiretor() {
             ))}
           </select>
         </div>
-        <div>
+        <div style={{ flex: 2 }}>
           <label htmlFor="busca">Buscar por Nome, CPF, Matrícula ou Disciplina:</label>
           <input 
             type="text" 
@@ -118,11 +150,11 @@ export default function GerenciarProfessoresDiretor() {
             placeholder="Digite para buscar..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
+            style={{ width: '100%' }}
           />
         </div>
       </div>
 
-      {/* Tabela de Professores */}
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
@@ -132,6 +164,7 @@ export default function GerenciarProfessoresDiretor() {
               <th>Disciplinas</th>
               <th>Turmas</th>
               <th>Status</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -152,50 +185,64 @@ export default function GerenciarProfessoresDiretor() {
                   <td>{prof.cpf || 'Não informado'}</td>
                   <td>
                     {prof.disciplinas.length > 0 ? (
-                      <div className={styles.disciplinasList}>
-                        {prof.disciplinas.slice(0, 2).map((disc, index) => (
-                          <span key={index} className={styles.disciplinaTag}>
-                            {disc}
-                          </span>
-                        ))}
-                        {prof.disciplinas.length > 2 && (
-                          <span className={styles.moreItems}>
-                            +{prof.disciplinas.length - 2} mais
-                          </span>
-                        )}
-                      </div>
+                      <>
+                        <div className={styles.disciplinasList}>
+                          {prof.disciplinas.slice(0, 2).map((disc, index) => (
+                            <span key={index} className={styles.disciplinaTag}>
+                              {disc}
+                            </span>
+                          ))}
+                          {prof.disciplinas.length > 2 && (
+                            <span className={styles.moreItems}>
+                              +{prof.disciplinas.length - 2} mais
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.totalBadge}>
+                          {prof.totalDisciplinas} disciplina{prof.totalDisciplinas !== 1 ? 's' : ''}
+                        </div>
+                      </>
                     ) : (
                       <span className={styles.semDisciplinas}>Sem disciplinas</span>
                     )}
-                    <div className={styles.totalBadge}>
-                      {prof.totalDisciplinas} disciplina{prof.totalDisciplinas !== 1 ? 's' : ''}
-                    </div>
                   </td>
                   <td>
                     {prof.turmas.length > 0 ? (
-                      <div className={styles.turmasList}>
-                        {prof.turmas.slice(0, 2).map((turma, index) => (
-                          <span key={index} className={styles.turmaTag}>
-                            {turma}
-                          </span>
-                        ))}
-                        {prof.turmas.length > 2 && (
-                          <span className={styles.moreItems}>
-                            +{prof.turmas.length - 2} mais
-                          </span>
-                        )}
-                      </div>
+                      <>
+                        <div className={styles.turmasList}>
+                          {prof.turmas.slice(0, 2).map((turma, index) => (
+                            <span key={index} className={styles.turmaTag}>
+                              {turma}
+                            </span>
+                          ))}
+                          {prof.turmas.length > 2 && (
+                            <span className={styles.moreItems}>
+                              +{prof.turmas.length - 2} mais
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.totalBadge}>
+                          {prof.totalTurmas} turma{prof.totalTurmas !== 1 ? 's' : ''}
+                        </div>
+                      </>
                     ) : (
                       <span className={styles.semTurmas}>Sem turmas</span>
                     )}
-                    <div className={styles.totalBadge}>
-                      {prof.totalTurmas} turma{prof.totalTurmas !== 1 ? 's' : ''}
-                    </div>
                   </td>
                   <td>
                     <span className={`${styles.tag} ${styles.tagAtivo}`}>
                       Ativo
                     </span>
+                  </td>
+                  <td className={styles.actions}>
+                    <button 
+                      onClick={() => handleExcluir(prof.idusuario, prof.nome)}
+                      className={`${styles.actionButton} ${styles.deleteButton}`}
+                      disabled={excluindo === prof.idusuario}
+                      title="Excluir professor"
+                    >
+                      {excluindo === prof.idusuario ? 'Excluindo...' : 'Excluir'}
+                    </button>
                   </td>
                 </tr>
               ))

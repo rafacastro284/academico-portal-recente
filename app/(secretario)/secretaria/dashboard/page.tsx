@@ -19,14 +19,14 @@ export default function SecretarioDashboard() {
           <Link href="/secretaria/alunos" className={styles.navCard}>
             {/* ... Gerenciar Alunos ... */}
             <div className={styles.iconWrapper}><IconGerenciarAlunos /></div>
-            <h3>Gerenciar Alunos</h3>
+            <h3>Alunos</h3>
             <p>Visualizar, filtrar e buscar alunos</p>
           </Link>
 
           <Link href="/secretaria/professores" className={styles.navCard}>
             {/* ... Gerenciar Professores ... */}
             <div className={styles.iconWrapper}><IconGerenciarProfessores /></div>
-            <h3>Gerenciar Professores</h3>
+            <h3>Professores</h3>
             <p>Visualizar, filtrar e buscar professores</p>
           </Link>
           
@@ -40,7 +40,7 @@ export default function SecretarioDashboard() {
           <Link href="/secretaria/turmas" className={styles.navCard}>
             <div className={styles.iconWrapper}><IconGerenciarTurmas /></div>
             <h3>Gerenciar Turmas</h3>
-            <p>Editar ou excluir turmas existentes</p>
+            <p>Visualizar, editar ou excluir turmas existentes</p>
           </Link>
 
         </div>

@@ -25,7 +25,7 @@ export default function SecretarioLayout({
         <div className={`${styles.card} ${styles.headerCard}`}>
           <div>
             <h1>Olá, {secretarioNome}</h1>
-            <p>Painel de Gerenciamento da Secretaria</p>
+            <p>Painel do Secretário</p>
           </div>
           <Link href="/login">
             <button className={styles.logoutButton}>Sair</button>

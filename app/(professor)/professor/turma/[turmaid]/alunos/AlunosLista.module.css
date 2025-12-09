@@ -1,62 +1,176 @@
+.container {
+  width: 100%;
+  padding: 20px;
+}
+
+.pageTitle {
+  color: #333;
+  margin-bottom: 2rem;
+  margin-top: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
 .sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .sectionTitle {
   margin: 0;
   color: #333;
+  font-size: 1.3rem;
 }
 
 .exportButton {
-  background-color: #28a745;
+  background-color: #3b82f6;
   color: white;
   border: none;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s;
+  font-size: 0.9rem;
 }
-.exportButton:hover { background-color: #218838; }
 
+.exportButton:hover { 
+  background-color: #2563eb; 
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-top: 1rem;
+}
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 800px;
 }
-.table th, .table td {
-  padding: 1rem;
+
+.table th,
+.table td {
+  padding: 1.25rem 1rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
 }
+
 .table th {
-  background-color: #374151;
-  color: white;
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.table tr:hover {
+  background-color: #f9fafb;
 }
 
 .statusTag {
-  padding: 0.25rem 0.75rem;
-  border-radius: 99px;
-  font-weight: 600;
-  font-size: 0.8rem;
   display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.statusCursando { background-color: #c6f6d5; color: #2f855a; } 
-.statusRecuperacao { background-color: #fefcbf; color: #b45309; } 
+.statusCursando { 
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.statusAprovado { 
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.statusRecuperacao { 
+  background-color: #fef3c7;
+  color: #92400e;
+}
 
 .actionButton {
-  background-color: #007bff;
-  color: white;
+  padding: 0.4rem 0.8rem;
   border: none;
-  padding: 0.5rem 1rem;
   border-radius: 6px;
+  color: white;
   cursor: pointer;
-  margin-right: 0.5rem;
-  font-size: 0.85rem;
+  font-weight: 500;
   transition: background-color 0.2s;
+  font-size: 0.8rem;
+  background-color: #3b82f6;
 }
-.actionButton:hover { background-color: #0056b3; }
+
+.actionButton:hover {
+  background-color: #2563eb;
+}
+
+.actionButton + .actionButton {
+  margin-left: 0.5rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.loadingState {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    gap: 15px;
+    padding: 12px;
+    align-items: flex-start;
+  }
+  
+  .exportButton {
+    width: 100%;
+  }
+  
+  .tableWrapper {
+    border-radius: 6px;
+    margin: 0 -15px;
+    width: calc(100% + 30px);
+  }
+  
+  .table {
+    font-size: 0.85rem;
+    min-width: 700px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px 12px;
+  }
+  
+  .actionButton {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}

@@ -1,187 +1,195 @@
 .container {
   width: 100%;
+  padding: 20px;
 }
 
-.pageTitle {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  color: #1a202c;
-  font-size: 1.8rem;
-}
-
-.headerInfo {
-  background-color: #f7fafc;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  border-left: 4px solid #805ad5;
-}
-
-.headerInfo p {
-  margin: 0.3rem 0;
-  color: #2d3748;
-}
-
-.formContainer {
-  background-color: white;
-  padding: 2rem;
+.filterBar {
+  background-color: #ffffff;
+  padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.filterGroup label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.85rem;
+}
+
+.selectInput {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background-color: white;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .sectionTitle {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  color: #2d3748;
+  color: #333;
   font-size: 1.3rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #e2e8f0;
 }
 
-.notaForm {
-  background-color: #f7fafc;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-}
-
-.inputGroup {
-  margin-bottom: 1.5rem;
-}
-
-.inputGroup label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.inputField {
+.tableWrapper {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.inputField:focus {
-  outline: none;
-  border-color: #805ad5;
-  box-shadow: 0 0 0 3px rgba(128, 90, 213, 0.1);
-}
-
-.inputField:disabled {
-  background-color: #e2e8f0;
-  cursor: not-allowed;
-}
-
-.actionButtons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.cancelButton,
-.saveButton {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: all 0.2s;
-}
-
-.cancelButton {
-  background-color: #e2e8f0;
-  color: #2d3748;
-}
-.cancelButton:hover {
-  background-color: #cbd5e0;
-}
-
-.saveButton {
-  background-color: #805ad5;
-  color: white;
-}
-.saveButton:hover {
-  background-color: #6b46c1;
-}
-
-.saveButton:disabled,
-.cancelButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.status {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.success {
-  background-color: #c6f6d5;
-  color: #22543d;
-}
-
-.error {
-  background-color: #fed7d7;
-  color: #742a2a;
-}
-
-.emptyMessage {
-  text-align: center;
-  color: #718096;
-  padding: 2rem;
-  background-color: #f7fafc;
-  border-radius: 8px;
-  font-style: italic;
+  overflow-x: auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-width: 800px;
 }
 
 .table th,
 .table td {
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
 }
 
 .table th {
-  background-color: #2d3748;
-  color: white;
+  background-color: #f8fafc;
+  color: #4a5568;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
-.table tbody tr:hover {
-  background-color: #f7fafc;
+.table tr:hover {
+  background-color: #f9fafb;
 }
 
-.deleteButton {
-  background-color: #e53e3e;
+.notaInput {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background-color: white;
+  transition: border-color 0.2s;
+  width: 100px;
+  text-align: center;
+}
+
+.notaInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.statusTag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusLancada {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.statusPendente {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.saveButton {
+  background-color: #3b82f6;
   color: white;
   border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: background-color 0.2s;
+  font-size: 0.9rem;
 }
-.deleteButton:hover {
-  background-color: #c53030;
+
+.saveButton:hover {
+  background-color: #2563eb;
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loadingState {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .filterBar {
+    flex-direction: column;
+    gap: 15px;
+    padding: 12px;
+  }
+  
+  .filterGroup {
+    min-width: 100%;
+  }
+  
+  .tableWrapper {
+    border-radius: 6px;
+    margin: 0 -15px;
+    width: calc(100% + 30px);
+  }
+  
+  .table {
+    font-size: 0.85rem;
+    min-width: 700px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px 12px;
+  }
+  
+  .notaInput {
+    width: 80px;
+  }
+  
+  .saveButton {
+    width: 100%;
+  }
 }

@@ -1,62 +1,161 @@
-.filterBar {
-  display: flex;
-  justify-content: flex-start; 
-  align-items: flex-end; 
-  gap: 1.5rem;
-  background-color: #f8fafc;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
+.container {
+  width: 100%;
+  padding: 20px;
+}
+
+.pageTitle {
+  color: #333;
   margin-bottom: 2rem;
+  margin-top: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
 }
-.filterBar div {
-  display: flex;
-  flex-direction: column;
+
+.headerInfo {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+  border-left: 4px solid #3b82f6;
 }
-.filterBar label {
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  font-size: 0.9rem;
+
+.headerInfo p {
+  margin: 0.3rem 0;
   color: #4a5568;
 }
-.filterBar input[type="date"] {
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #cbd5e0;
+
+.formContainer {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   min-width: 150px;
 }
 
-.saveButton {
-  background-color: #007bff;
-  color: white;
+.filterGroup label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.85rem;
+}
+
+.filterGroup input[type="date"] {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background-color: white;
+  transition: border-color 0.2s;
+  min-width: 150px;
+}
+
+.filterGroup input[type="date"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.quickActions {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.btnPresentes,
+.btnFaltas {
+  padding: 0.6rem 1rem;
   border: none;
-  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.85rem;
   transition: background-color 0.2s;
-  margin-left: auto; 
 }
-.saveButton:hover { background-color: #0056b3; }
 
+.btnPresentes {
+  background-color: #dcfce7;
+  color: #166534;
+}
 
-.sectionTitle {
-  margin-top: 0;
+.btnPresentes:hover {
+  background-color: #bbf7d0;
+}
+
+.btnFaltas {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.btnFaltas:hover {
+  background-color: #fecaca;
+}
+
+.resumo {
+  display: flex;
+  gap: 2rem;
   margin-bottom: 1.5rem;
-  color: #333;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.resumo p {
+  margin: 0;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.resumo strong {
+  color: #2d3748;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 2rem;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 800px;
 }
-.table th, .table td {
-  padding: 1rem;
+
+.table th,
+.table td {
+  padding: 1.25rem 1rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
 }
+
 .table th {
-  background-color: #374151;
-  color: white;
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.table tr:hover {
+  background-color: #f9fafb;
 }
 
 .radioGroup {
@@ -70,6 +169,139 @@
   gap: 0.5rem;
   cursor: pointer;
 }
+
 .radioLabel input[type="radio"] {
-  transform: scale(1.2); 
+  transform: scale(1.2);
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.cancelButton {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.cancelButton:hover {
+  background-color: #cbd5e0;
+}
+
+.saveButton {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.saveButton:hover {
+  background-color: #2563eb;
+}
+
+.saveButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  background-color: #f7fafc;
+  border-radius: 8px;
+  font-style: italic;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .formContainer {
+    padding: 1rem;
+  }
+  
+  .filterBar {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .quickActions {
+    margin-left: 0;
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .btnPresentes,
+  .btnFaltas {
+    width: 100%;
+  }
+  
+  .resumo {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .tableWrapper {
+    margin: 0 -15px;
+    width: calc(100% + 30px);
+  }
+  
+  .table {
+    font-size: 0.85rem;
+    min-width: 700px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px 12px;
+  }
+  
+  .radioGroup {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .cancelButton,
+  .saveButton {
+    width: 100%;
+  }
 }

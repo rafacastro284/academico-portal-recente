@@ -18,7 +18,6 @@ export default async function ProfessorDashboard() {
   const idProfessor = Number(userIdCookie.value);
 
   // --- LOGS INICIAIS ---
-  console.log("\n========================================");
   console.log("🕵️‍♂️ DEBUG DASHBOARD PROFESSOR");
   console.log("👤 ID Professor Logado:", idProfessor);
   console.log("🔄 Buscando dados no banco...");
@@ -37,7 +36,6 @@ export default async function ProfessorDashboard() {
     console.log("⚠️ NENHUM DADO RETORNADO (resultado.data é nulo)");
     console.log("Erro reportado:", resultado.error);
   }
-  console.log("========================================\n");
 
 
   if (!resultado.success || !resultado.data) {

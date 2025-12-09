@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './GerenciarTurmas.module.css';
-import { listarTurmasParaDiretorAction } from '@/lib/actions/diretoria';
+import { listarTurmasParaDiretorAction, excluirTurmaAction } from '@/lib/actions/diretoria';
 
 interface Turma {
   id: number;
@@ -14,6 +14,7 @@ interface Turma {
   professorNome: string;
   totalAlunos: number;
   anoLetivo: number;
+  status?: string;
 }
 
 export default function GerenciarTurmasDiretor() {
@@ -23,6 +24,7 @@ export default function GerenciarTurmasDiretor() {
   const [serieSel, setSerieSel] = useState('todas');
   const [turnoSel, setTurnoSel] = useState('todos');
   const [anoSel, setAnoSel] = useState('todos');
+  const [excluindo, setExcluindo] = useState<number | null>(null);
 
   // Carregar turmas do banco
   useEffect(() => {
@@ -35,7 +37,6 @@ export default function GerenciarTurmasDiretor() {
       const res = await listarTurmasParaDiretorAction();
       
       if (res.success && res.data) {
-        // Formatar os dados (remover campos desnecessários)
         const turmasFormatadas: Turma[] = res.data.map(turma => ({
           id: turma.id,
           nome: turma.nome || "Turma sem nome",
@@ -43,7 +44,8 @@ export default function GerenciarTurmasDiretor() {
           turno: turma.turno || "Não informado",
           professorNome: turma.professorNome || "Sem professor",
           totalAlunos: turma.totalAlunos || 0,
-          anoLetivo: turma.anoLetivo || new Date().getFullYear()
+          anoLetivo: turma.anoLetivo || new Date().getFullYear(),
+          status: turma.totalAlunos > 0 ? "Ativa" : "Vazia"
         }));
         
         setTurmas(turmasFormatadas);
@@ -57,16 +59,28 @@ export default function GerenciarTurmasDiretor() {
     }
   }
 
-  // Função para editar turma (agora redireciona para o secretário, pois o diretor não edita diretamente)
-  const handleEditarTurma = (turmaId: number) => {
-    // Redireciona para a página de edição da secretaria
-    router.push(`/secretaria/turmas/editar/${turmaId}`);
-  };
+  // Função para excluir turma
+  const handleExcluirTurma = async (turmaId: number) => {
+    if (!confirm('Tem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita.')) {
+      return;
+    }
 
-  // Função para visualizar detalhes da turma
-  const handleVerDetalhes = (turmaId: number) => {
-    // Redireciona para uma página de detalhes no diretor
-    router.push(`/diretor/turmas/${turmaId}`);
+    try {
+      setExcluindo(turmaId);
+      const res = await excluirTurmaAction(turmaId);
+      
+      if (res.success) {
+        setTurmas(turmas.filter(turma => turma.id !== turmaId));
+        alert('Turma excluída com sucesso!');
+      } else {
+        alert(`Erro ao excluir turma: ${res.error || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Ocorreu um erro ao excluir a turma.');
+    } finally {
+      setExcluindo(null);
+    }
   };
 
   // Filtros
@@ -83,7 +97,7 @@ export default function GerenciarTurmasDiretor() {
   const turnosUnicos = [...new Set(turmas.map(t => t.turno))].filter(Boolean).sort();
   const anosUnicos = [...new Set(turmas.map(t => t.anoLetivo.toString()))].filter(Boolean).sort((a, b) => b.localeCompare(a));
 
-  if (loading) return <div className={styles.container}><p>Carregando turmas...</p></div>;
+  if (loading) return <div className={styles.container}><p className={styles.loadingState}>Carregando turmas...</p></div>;
 
   return (
     <div className={styles.container}>
@@ -95,21 +109,23 @@ export default function GerenciarTurmasDiretor() {
 
       {/* Filtros */}
       <div className={styles.filterBar}>
-        <div>
+        <div className={styles.filterGroup}>
           <label htmlFor="filtroSerie">Filtrar por Série/Ano:</label>
           <select id="filtroSerie" value={serieSel} onChange={(e) => setSerieSel(e.target.value)}>
             <option value="todas">Todas as Séries</option>
             {seriesUnicas.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
-        <div>
+
+        <div className={styles.filterGroup}>
           <label htmlFor="filtroTurno">Filtrar por Turno:</label>
           <select id="filtroTurno" value={turnoSel} onChange={(e) => setTurnoSel(e.target.value)}>
             <option value="todos">Todos os Turnos</option>
             {turnosUnicos.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
-        <div>
+
+        <div className={styles.filterGroup}>
           <label htmlFor="filtroAno">Filtrar por Ano Letivo:</label>
           <select id="filtroAno" value={anoSel} onChange={(e) => setAnoSel(e.target.value)}>
             <option value="todos">Todos os Anos</option>
@@ -135,7 +151,7 @@ export default function GerenciarTurmasDiretor() {
           <tbody>
             {filteredTurmas.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
                   {turmas.length === 0 ? 'Nenhuma turma cadastrada' : 'Nenhuma turma encontrada com esses filtros'}
                 </td>
               </tr>
@@ -159,11 +175,16 @@ export default function GerenciarTurmasDiretor() {
                   </td>
                   <td className={styles.actions}>
                     <button 
-                      className={`${styles.actionButton} ${styles.editButton}`}
-                      onClick={() => handleEditarTurma(turma.id)}
-                      title="Editar turma (Secretaria)"
+                      className={`${styles.actionButton} ${styles.deleteButton}`}
+                      onClick={() => handleExcluirTurma(turma.id)}
+                      title="Excluir turma"
+                      disabled={excluindo === turma.id}
                     >
-                      ✏️ Editar
+                      {excluindo === turma.id ? (
+                        'Excluindo...'
+                      ) : (
+                        'Excluir'
+                      )}
                     </button>
                   </td>
                 </tr>

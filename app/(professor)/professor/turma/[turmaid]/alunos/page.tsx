@@ -1,4 +1,3 @@
-// --- /professor/turma/[turmaid]/alunos/page.tsx ---
 import { getAlunosDaTurmaAction } from '@/lib/actions/professor';
 import AlunosTable from './AlunosTable';
 import styles from './AlunosLista.module.css';

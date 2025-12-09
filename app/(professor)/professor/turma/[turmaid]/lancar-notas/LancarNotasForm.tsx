@@ -162,33 +162,35 @@ export default function LancarNotasForm({
       {notasExistentes.length === 0 ? (
         <p className={styles.emptyMessage}>Nenhuma nota lançada ainda.</p>
       ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Avaliação</th>
-              <th>Nota</th>
-              <th>Data</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {notasExistentes.map((nota) => (
-              <tr key={nota.idNota}>
-                <td>{nota.descricao || 'Sem descrição'}</td>
-                <td><strong>{nota.valor.toFixed(1)}</strong></td>
-                <td>{formatarData(nota.data)}</td>
-                <td>
-                  <button
-                    onClick={() => handleExcluir(nota.idNota)}
-                    className={styles.deleteButton}
-                  >
-                    Excluir
-                  </button>
-                </td>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Avaliação</th>
+                <th>Nota</th>
+                <th>Data</th>
+                <th>Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {notasExistentes.map((nota) => (
+                <tr key={nota.idNota}>
+                  <td>{nota.descricao || 'Sem descrição'}</td>
+                  <td><strong>{nota.valor.toFixed(1)}</strong></td>
+                  <td>{formatarData(nota.data)}</td>
+                  <td>
+                    <button
+                      onClick={() => handleExcluir(nota.idNota)}
+                      className={styles.deleteButton}
+                    >
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

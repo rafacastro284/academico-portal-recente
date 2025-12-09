@@ -8,7 +8,7 @@ import { lancarFrequenciaAction, getDadosLancamentoFrequenciaListaAction } from 
 interface AlunoFrequencia {
   idAlunoDisciplina: number;
   idAluno: number;
-  nome: string | null;  // ✅ CORRIGIDO: Aceita null
+  nome: string | null;
   matricula: string | null;
   statusAtual: 'P' | 'F' | 'N/A';
 }
@@ -120,46 +120,46 @@ export default function LancarFrequenciaForm({
 
   return (
     <div className={styles.formContainer}>
-      <form onSubmit={handleSalvar}>
-        <div className={styles.filterBar}>
-          <div>
-            <label htmlFor="dataLancamento">Data do Registro:</label>
-            <input
-              type="date"
-              id="dataLancamento"
-              value={dataSelecionada}
-              onChange={handleDataChange}
-              required
-              disabled={isSaving || isLoadingData}
-            />
-          </div>
-
-          <div className={styles.quickActions}>
-            <button 
-              type="button" 
-              onClick={handleMarcarTodosPresentes}
-              className={styles.btnPresentes}
-              disabled={isSaving || isLoadingData}
-            >
-              Marcar Todos Presentes
-            </button>
-            <button 
-              type="button" 
-              onClick={handleMarcarTodosFaltosos}
-              className={styles.btnFaltas}
-              disabled={isSaving || isLoadingData}
-            >
-              Marcar Todos Faltosos
-            </button>
-          </div>
+      <div className={styles.filterBar}>
+        <div className={styles.filterGroup}>
+          <label htmlFor="dataLancamento">Data do Registro:</label>
+          <input
+            type="date"
+            id="dataLancamento"
+            value={dataSelecionada}
+            onChange={handleDataChange}
+            required
+            disabled={isSaving || isLoadingData}
+          />
         </div>
 
-        <div className={styles.resumo}>
-          <p><strong>Presenças:</strong> {contarPresencas()}</p>
-          <p><strong>Faltas:</strong> {contarFaltas()}</p>
-          <p><strong>Total de Alunos:</strong> {alunos.length}</p>
+        <div className={styles.quickActions}>
+          <button 
+            type="button" 
+            onClick={handleMarcarTodosPresentes}
+            className={styles.btnPresentes}
+            disabled={isSaving || isLoadingData}
+          >
+            Marcar Todos Presentes
+          </button>
+          <button 
+            type="button" 
+            onClick={handleMarcarTodosFaltosos}
+            className={styles.btnFaltas}
+            disabled={isSaving || isLoadingData}
+          >
+            Marcar Todos Faltosos
+          </button>
         </div>
+      </div>
 
+      <div className={styles.resumo}>
+        <p><strong>Presenças:</strong> {contarPresencas()}</p>
+        <p><strong>Faltas:</strong> {contarFaltas()}</p>
+        <p><strong>Total de Alunos:</strong> {alunos.length}</p>
+      </div>
+
+      <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -203,25 +203,26 @@ export default function LancarFrequenciaForm({
             ))}
           </tbody>
         </table>
+      </div>
 
-        <div className={styles.actionButtons}>
-          <button 
-            type="button"
-            onClick={() => router.back()}
-            className={styles.cancelButton}
-            disabled={isSaving}
-          >
-            Cancelar
-          </button>
-          <button 
-            type="submit" 
-            className={styles.saveButton}
-            disabled={isSaving || isLoadingData}
-          >
-            {isSaving ? 'Salvando...' : 'Salvar Frequências'}
-          </button>
-        </div>
-      </form>
+      <div className={styles.actionButtons}>
+        <button 
+          type="button"
+          onClick={() => router.back()}
+          className={styles.cancelButton}
+          disabled={isSaving}
+        >
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          className={styles.saveButton}
+          disabled={isSaving || isLoadingData}
+          onClick={handleSalvar}
+        >
+          {isSaving ? 'Salvando...' : 'Salvar Frequências'}
+        </button>
+      </div>
 
       {statusMessage && (
         <p className={`${styles.status} ${statusMessage.includes('✅') ? styles.success : styles.error}`}>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "./GerenciarAlunos.module.css";
-// Importamos as Actions reais
 import { listarAlunosComTurmaAction, listarTurmasAction } from "@/lib/actions/secretaria";
 
 interface AlunoFormatado {
@@ -46,7 +45,6 @@ export default function GerenciarAlunos() {
 
         if (resTurmas.success && resTurmas.data) {
           // Extrai nomes de turmas únicos e séries únicas para os filtros
-          // Corrigido: usando 'nome' ao invés de 'nome_turma' conforme o tipo retornado
           const nomesTurmas = Array.from(
             new Set(resTurmas.data.map(t => t.nome || ""))
           ).filter(Boolean);

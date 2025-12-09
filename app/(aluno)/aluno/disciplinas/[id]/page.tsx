@@ -155,10 +155,6 @@ export default function DetalhesDisciplinaPage() {
             <strong>{dados.resumo.faltas}</strong>
             <p>Total de Faltas</p>
           </div>
-          <div className={styles.summaryCard}>
-            <strong>{dados.resumo.porcentagemFreq}</strong>
-            <p>Frequência</p>
-          </div>
         </div>
 
         {activeTab === 'notas' ? (

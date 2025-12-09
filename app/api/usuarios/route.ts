@@ -4,9 +4,7 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-// ==============================================
 // Método POST → Cadastrar novo usuário
-// ==============================================
 export async function POST(req: Request) {
   try {
     const body = await req.json();

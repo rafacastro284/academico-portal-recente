@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-// 👇 CORREÇÃO: Adicionado 'lancarNotasEmLoteAction' na importação
 import { getAlunosDaTurmaAction, lancarNotasEmLoteAction } from '@/lib/actions/professor';
 import styles from './LancarNotas.module.css'; 
 
@@ -45,7 +44,6 @@ export default function LancarNotasPage() {
     const notasIniciais: Record<number, string> = {};
 
     alunos.forEach((aluno) => {
-      // Agora 'aluno.nota' existe porque corrigimos o backend
       const notaEncontrada = aluno.nota?.find((n: any) => n.descricao === descricaoAlvo);
       
       if (notaEncontrada) {

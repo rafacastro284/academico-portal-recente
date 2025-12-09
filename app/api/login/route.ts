@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const { cpf, senha } = await request.json();
 
-    // 🔍 Busca o usuário pelo CPF
+    // Busca o usuário pelo CPF
     const user = await prisma.usuario.findUnique({
       where: { cpf },
     });
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 🔐 Verifica a senha
+    // Verifica a senha
     const senhaCorreta = await bcrypt.compare(senha, user.senha ?? '');
     if (!senhaCorreta) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 🎯 Define o caminho de redirecionamento conforme o tipo do usuário
+    // Define o caminho de redirecionamento conforme o tipo do usuário
     let redirectPath = '/';
     switch (user.tipo) {
       case 'aluno':
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         redirectPath = '/';
     }
 
-    // ✅ Retorna dados do usuário e o caminho correto
+    // Retorna dados do usuário e o caminho correto
     return NextResponse.json({
       message: 'Login bem-sucedido!',
       usuario: {

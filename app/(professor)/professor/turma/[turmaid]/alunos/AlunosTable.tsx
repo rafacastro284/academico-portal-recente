@@ -4,7 +4,6 @@ import styles from './AlunosLista.module.css';
 import Link from 'next/link';
 import React from 'react';
 
-// 1. CORREÇÃO: mediaAtual é uma string formatada ("7.5" ou "-")
 interface AlunoFormatado {
     idAlunoDisciplina: number;
     idAluno: number;
@@ -61,11 +60,6 @@ export default function AlunosTable({
                 {turmaNome} – {disciplinaNome}
             </h1>
 
-            <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Lista de Alunos</h3>
-                <button className={styles.exportButton}>Exportar Lista</button>
-            </div>
-
             <table className={styles.table}>
                 <thead>
                     <tr>
@@ -94,14 +88,12 @@ export default function AlunosTable({
                                 <td>{aluno.nome}</td>
 
                                 <td>
-                                    {/* 2. CORREÇÃO: A média já vem formatada como string da action, apenas renderize-a. */}
                                     {aluno.mediaAtual === '-' ? '-' : aluno.mediaAtual}
                                 </td>
 
                                 <td>{aluno.faltas}</td>
 
                                 <td>
-                                    {/* 3. CORREÇÃO: Passa a string para o cálculo de status */}
                                     <span className={`${styles.statusTag} ${getStatusClass(aluno.mediaAtual)}`}>
                                         {getStatusLabel(aluno.mediaAtual)}
                                     </span>

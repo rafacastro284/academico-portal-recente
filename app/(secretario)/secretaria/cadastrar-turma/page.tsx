@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './CadastrarTurma.module.css';
-
-// Importar as actions
 import { cadastrarTurmaAction, getDadosCadastroTurmaAction } from '@/lib/actions/secretaria';
 
 const mockSeries = [
@@ -44,7 +42,6 @@ export default function CadastrarTurma() {
     async function loadData() {
       const res = await getDadosCadastroTurmaAction();
       
-      // Corrigido: verificação de tipo adequada
       if (res.success && res.data) {
         // Acessar alunos e disciplinas através de res.data
         setDbAlunos(res.data.alunos || []);
