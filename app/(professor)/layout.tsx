@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { buscarUsuarioPorIdAction, getDashboardProfessorAction } from '@/lib/actions/professor';
+import { redirect } from 'next/navigation'; // Necessário para o Logout
+import { getDashboardProfessorAction } from '@/lib/actions/professor';
+// 👇 CORREÇÃO 1: Importando a busca de usuário do local correto (admin)
+import { buscarUsuarioPorIdAction } from '@/lib/actions/admin'; 
 import styles from './ProfessorLayout.module.css';
 
-const IconTurmas = () => <>🏫</>;
-const IconAlunos = () => <>👨‍🎓</>;
-const IconDisciplinas = () => <>📚</>;
+const IconTurmas = () => <span>🏫</span>;
+const IconAlunos = () => <span>👨‍🎓</span>;
+const IconDisciplinas = () => <span>📚</span>;
 
 export default async function ProfessorLayout({
   children,
@@ -16,7 +19,12 @@ export default async function ProfessorLayout({
   const cookieStore = await cookies();
   const userIdCookie = cookieStore.get('portal_usuario_id');
   
-  // Valores padrão (caso não esteja logado ou dê erro, para não quebrar o layout)
+  // Se não tiver cookie, força o login imediatamente (Segurança)
+  if (!userIdCookie) {
+    redirect('/login');
+  }
+
+  // Valores padrão
   let nomeProfessor = "Professor";
   let stats = {
     turmas: 0,
@@ -27,19 +35,18 @@ export default async function ProfessorLayout({
   if (userIdCookie) {
     const id = Number(userIdCookie.value);
 
-    // 2. Busca o nome do usuário
+    // 2. Busca o nome do usuário (Usando a action de admin)
     const usuarioRes = await buscarUsuarioPorIdAction(id);
     if (usuarioRes.success && usuarioRes.data) {
       nomeProfessor = usuarioRes.data.nome || "Professor";
     }
 
-    // 3. Busca os dados do dashboard para preencher os cards de resumo
+    // 3. Busca os dados do dashboard
     const dashRes = await getDashboardProfessorAction(id);
     if (dashRes.success && dashRes.data) {
       const { totalTurmas, totalAlunos, turmas } = dashRes.data;
       
-      // Calcula quantas disciplinas ÚNICAS ele ministra (ex: Matemática, Física = 2)
-      // Usamos um Set para remover duplicatas dos nomes
+      // Calcula disciplinas únicas usando Set
       const disciplinasUnicas = new Set(turmas.map((t: any) => t.nomeDisciplina)).size;
 
       stats = {
@@ -63,29 +70,36 @@ export default async function ProfessorLayout({
             <h1>Portal do Professor</h1>
             <p>Olá, <strong>{nomeProfessor}</strong></p>
           </div>
-          <Link href="/login">
-            <button className={styles.logoutButton}>Sair</button>
-          </Link>
+          
+          {/* 👇 CORREÇÃO 2: Logout real que apaga o cookie */}
+          <form action={async () => {
+            'use server';
+            const c = await cookies();
+            c.delete('portal_usuario_id');
+            redirect('/login');
+          }}>
+             <button className={styles.logoutButton}>Sair</button>
+          </form>
         </div>
         
-        {/* -- Cards de Resumo Rápido (Agora com dados REAIS) -- */}
+        {/* -- Cards de Resumo Rápido -- */}
         <div className={styles.summaryGrid}>
           <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconTurmas /></div>
+            <div className={styles.iconWrapper} style={{backgroundColor: '#dbeafe'}}><IconTurmas /></div>
             <div>
               <strong>{stats.turmas}</strong>
               <p>Turmas</p>
             </div>
           </div>
           <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconAlunos /></div>
+            <div className={styles.iconWrapper} style={{backgroundColor: '#dcfce7'}}><IconAlunos /></div>
             <div>
               <strong>{stats.alunos}</strong>
               <p>Alunos</p>
             </div>
           </div>
           <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconDisciplinas /></div>
+            <div className={styles.iconWrapper} style={{backgroundColor: '#f3e8ff'}}><IconDisciplinas /></div>
             <div>
               <strong>{stats.disciplinas}</strong>
               <p>Disciplinas</p>
@@ -93,7 +107,6 @@ export default async function ProfessorLayout({
           </div>
         </div>
 
-        {/* -- Conteúdo da Página Atual (Dashboard, Lista, Notas...) -- */}
         {children}
       </main>
 

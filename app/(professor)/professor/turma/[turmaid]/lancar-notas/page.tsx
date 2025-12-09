@@ -1,114 +1,195 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import { professorData } from '../../../../../lib/mockData';
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+// 👇 CORREÇÃO: Adicionado 'lancarNotasEmLoteAction' na importação
+import { getAlunosDaTurmaAction, lancarNotasEmLoteAction } from '@/lib/actions/professor';
 import styles from './LancarNotas.module.css'; 
 
 export default function LancarNotasPage() {
   const params = useParams();
-  const turmaId = params.turmaId as string;
-  const turma = professorData.turmas.find(t => t.id === turmaId);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
+  const turmaId = Number(params?.turmaid); 
+  const disciplinaId = Number(searchParams.get('disciplina'));
+
+  const [alunos, setAlunos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Estados dos Filtros
   const [bimestre, setBimestre] = useState('1'); 
-  const [avaliacao, setAvaliacao] = useState('av1'); 
+  const [avaliacao, setAvaliacao] = useState('AV1'); 
+  const [notasDigitadas, setNotasDigitadas] = useState<Record<number, string>>({});
 
-  const [alunosComNotas, setAlunosComNotas] = useState(
-    turma?.alunos.map(aluno => ({
-      ...aluno,
-      nota: (turma.notasLancadas?.find(n => n.matricula === aluno.matricula)?.nota || 0).toFixed(1),
-      statusNota: (turma.notasLancadas?.find(n => n.matricula === aluno.matricula)?.status || 'Pendente'),
-      ultimaAtualizacao: (turma.notasLancadas?.find(n => n.matricula === aluno.matricula)?.ultimaAtualizacao || '-'),
-    })) || []
-  );
+  // 1. Carrega alunos e TODAS as notas do banco
+  useEffect(() => {
+    async function carregar() {
+      if (!turmaId || !disciplinaId) return;
+      
+      const res = await getAlunosDaTurmaAction(turmaId, disciplinaId);
+      
+      if (res.success && res.data) {
+        setAlunos(res.data.alunos);
+      }
+      setLoading(false);
+    }
+    carregar();
+  }, [turmaId, disciplinaId]);
 
-  if (!turma) return null;
+  // 2. Quando muda o Bimestre/Avaliação, preenche os inputs com o que veio do banco
+  useEffect(() => {
+    const descricaoAlvo = `${bimestre}º Bimestre - ${avaliacao}`;
+    const notasIniciais: Record<number, string> = {};
 
-  const handleNotaChange = (matricula: string, novaNota: string) => {
-    setAlunosComNotas(prev =>
-      prev.map(aluno =>
-        aluno.matricula === matricula
-          ? { ...aluno, nota: novaNota, statusNota: 'Pendente', ultimaAtualizacao: '-' } 
-          : aluno
-      )
-    );
+    alunos.forEach((aluno) => {
+      // Agora 'aluno.nota' existe porque corrigimos o backend
+      const notaEncontrada = aluno.nota?.find((n: any) => n.descricao === descricaoAlvo);
+      
+      if (notaEncontrada) {
+        notasIniciais[aluno.idAlunoDisciplina] = String(notaEncontrada.valor);
+      } else {
+        notasIniciais[aluno.idAlunoDisciplina] = ''; // Limpa o campo se não tiver nota
+      }
+    });
+
+    setNotasDigitadas(notasIniciais);
+  }, [bimestre, avaliacao, alunos]);
+
+  // 3. Atualiza estado ao digitar
+  const handleNotaChange = (idAlunoDisciplina: number, valor: string) => {
+    setNotasDigitadas(prev => ({ ...prev, [idAlunoDisciplina]: valor }));
   };
 
-  const handleSaveAllNotes = () => {
-    console.log(`Salvando notas para Turma ${turma.nome}, Bimestre ${bimestre}, Avaliação ${avaliacao}:`, alunosComNotas);
-    alert('Notas salvas! (Ver console)');
-    setAlunosComNotas(prev => 
-      prev.map(aluno => ({ 
-        ...aluno, 
-        statusNota: 'Lançada', 
-        ultimaAtualizacao: new Date().toLocaleDateString('pt-BR') 
+  // 4. Salva no Banco (EM LOTE)
+  const handleSaveAllNotes = async () => {
+    setSaving(true);
+    const descricaoFinal = `${bimestre}º Bimestre - ${avaliacao}`;
+
+    // Prepara array apenas com notas preenchidas e válidas
+    const notasParaSalvar = Object.entries(notasDigitadas)
+      .map(([id, valor]) => ({
+        idAlunoDisciplina: Number(id),
+        valor: parseFloat(valor)
       }))
-    );
+      // Filtra valores inválidos ou vazios (para não salvar NaN)
+      .filter(item => !isNaN(item.valor) && item.valor >= 0 && item.valor <= 10);
+
+    if (notasParaSalvar.length === 0) {
+      alert("Nenhuma nota válida preenchida para salvar.");
+      setSaving(false);
+      return;
+    }
+
+    // Chama a Server Action corrigida
+    const resultado = await lancarNotasEmLoteAction({
+      descricaoAvaliacao: descricaoFinal,
+      notas: notasParaSalvar
+    });
+
+    if (resultado.success) {
+      alert(`✅ Notas de ${descricaoFinal} salvas com sucesso!`);
+      window.location.reload(); // Recarrega para garantir sincronia
+    } else {
+      alert('❌ Erro ao salvar: ' + resultado.error);
+    }
+    setSaving(false);
   };
+
+  if (loading) return <div className={styles.container}>Carregando lista de alunos...</div>;
+  if (!turmaId || !disciplinaId) return <div className={styles.container}>Erro: Turma ou Disciplina não identificada.</div>;
 
   return (
-    <div>
+    <div className={styles.container}>
+      <div style={{ marginBottom: '20px' }}>
+        <Link href={`/professor/turma/${turmaId}/alunos?disciplina=${disciplinaId}`} style={{textDecoration:'none', color:'#666'}}>
+           &larr; Voltar para Lista
+        </Link>
+      </div>
+
       <div className={styles.filterBar}>
-        <div>
-          <label>Bimestre:</label>
-          <select value={bimestre} onChange={(e) => setBimestre(e.target.value)}>
-            <option value="1">1º Bimestre</option>
-            <option value="2">2º Bimestre</option>
-            <option value="3">3º Bimestre</option>
-            <option value="4">4º Bimestre</option>
-          </select>
+        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+          <div>
+            <label style={{ marginRight: 5, fontWeight: 'bold' }}>Bimestre:</label>
+            <select 
+              value={bimestre} 
+              onChange={(e) => setBimestre(e.target.value)}
+              className={styles.selectInput}
+            >
+              <option value="1">1º Bimestre</option>
+              <option value="2">2º Bimestre</option>
+              <option value="3">3º Bimestre</option>
+              <option value="4">4º Bimestre</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ marginRight: 5, fontWeight: 'bold' }}>Avaliação:</label>
+            <select 
+              value={avaliacao} 
+              onChange={(e) => setAvaliacao(e.target.value)}
+              className={styles.selectInput}
+            >
+              <option value="AV1">AV1</option>
+              <option value="AV2">AV2</option>
+              <option value="AV3">AV3</option>
+              <option value="AVD">AVD</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label>Avaliação:</label>
-          <select value={avaliacao} onChange={(e) => setAvaliacao(e.target.value)}>
-            <option value="av1">AV1</option>
-            <option value="av2">AV2</option>
-            <option value="av3">AV3</option>
-            <option value="avd">AVD</option>
-          </select>
-        </div>
-        <button className={styles.saveButton} onClick={handleSaveAllNotes}>
-          Salvar Todas as Notas
+        
+        <button className={styles.saveButton} onClick={handleSaveAllNotes} disabled={saving}>
+          {saving ? 'Salvando...' : 'Salvar Todas as Notas'}
         </button>
       </div>
 
-      <h3 className={styles.sectionTitle}>Lançar Notas</h3>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Matrícula</th>
-            <th>Nome do Aluno</th>
-            <th>Nota</th>
-            <th>Status</th>
-            <th>Última Atualização</th>
-          </tr>
-        </thead>
-        <tbody>
-          {alunosComNotas.map((aluno) => (
-            <tr key={aluno.matricula}>
-              <td>{aluno.matricula}</td>
-              <td>{aluno.nome}</td>
-              <td>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="10"
-                  value={aluno.nota}
-                  onChange={(e) => handleNotaChange(aluno.matricula, e.target.value)}
-                  className={styles.notaInput}
-                />
-              </td>
-              <td>
-                <span className={`${styles.statusTag} ${aluno.statusNota === 'Lançada' ? styles.statusLancada : styles.statusPendente}`}>
-                  {aluno.statusNota}
-                </span>
-              </td>
-              <td>{aluno.ultimaAtualizacao}</td>
+      <h3 className={styles.sectionTitle}>
+        Lançando: {bimestre}º Bimestre - {avaliacao}
+      </h3>
+      
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Matrícula</th>
+              <th>Nome do Aluno</th>
+              <th>Nota (0 - 10)</th>
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {alunos.map((aluno) => {
+              const notaAtual = notasDigitadas[aluno.idAlunoDisciplina] || '';
+              const status = notaAtual === '' ? 'Pendente' : 'Preenchido';
+
+              return (
+                <tr key={aluno.idAlunoDisciplina}>
+                  <td>{aluno.matricula || '-'}</td>
+                  <td>{aluno.nome}</td>
+                  <td>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      value={notaAtual}
+                      onChange={(e) => handleNotaChange(aluno.idAlunoDisciplina, e.target.value)}
+                      className={styles.notaInput}
+                      placeholder="-"
+                    />
+                  </td>
+                  <td>
+                    <span className={`${styles.statusTag} ${notaAtual !== '' ? styles.statusLancada : styles.statusPendente}`}>
+                      {status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

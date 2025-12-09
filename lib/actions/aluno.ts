@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from 'next/headers';
 
+// ==================== DASHBOARD DO ALUNO ====================
 export async function getDashboardAlunoAction(idAluno: number) {
   try {
     const aluno = await prisma.usuario.findUnique({
@@ -19,7 +20,12 @@ export async function getDashboardAlunoAction(idAluno: number) {
     const matriculas = await prisma.alunodisciplina.findMany({
       where: { idaluno: idAluno },
       include: {
-        disciplina: { include: { professor: { select: { nome: true } } } },
+        disciplina: { 
+          include: { 
+            // CORREÇÃO: No seu schema é 'professor', não 'usuario'
+            professor: { select: { nome: true } } 
+          } 
+        },
         nota: true, 
         frequencia: true
       }
@@ -44,6 +50,7 @@ export async function getDashboardAlunoAction(idAluno: number) {
       return {
         id: m.iddisciplina,
         nome: m.disciplina.nome_disciplina,
+        // CORREÇÃO: m.disciplina.professor
         professor: m.disciplina.professor?.nome || "Sem Professor",
         media: m.nota.length > 0 ? mediaNumerica.toFixed(1) : "-",
         frequencia: `${faltasDisc} faltas`
@@ -66,12 +73,15 @@ export async function getDashboardAlunoAction(idAluno: number) {
       }
     };
   } catch (error) { 
+    console.error("Erro getDashboardAlunoAction:", error);
     return { success: false, error: "Erro ao carregar dados." }; 
   }
 }
 
+// ==================== DETALHES DA DISCIPLINA (VISÃO DO ALUNO) ====================
 export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
   try {
+    // 1. Autenticação: Pegar ID do Aluno pelo Cookie
     const cookieStore = await cookies();
     const userIdCookie = cookieStore.get('portal_usuario_id');
     
@@ -80,10 +90,19 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
     }
     const idAluno = Number(userIdCookie.value);
 
+    // 2. Buscar o vínculo específico (Aluno <-> Disciplina)
     const vinculo = await prisma.alunodisciplina.findFirst({
-      where: { idaluno: idAluno, iddisciplina: idDisciplinaRaw },
+      where: { 
+        idaluno: idAluno, 
+        iddisciplina: idDisciplinaRaw 
+      },
       include: {
-        disciplina: { include: { professor: { select: { nome: true } } } },
+        disciplina: { 
+          include: { 
+             // CORREÇÃO: 'professor'
+             professor: { select: { nome: true } } 
+          } 
+        },
         nota: { orderBy: { data: 'desc' } },
         frequencia: { orderBy: { data: 'desc' } }
       }
@@ -93,6 +112,7 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
       return { success: false, error: "Disciplina não encontrada ou você não está matriculado nela." };
     }
 
+    // 3. Cálculos Estatísticos
     const somaNotas = vinculo.nota.reduce((acc, n) => acc + Number(n.valor || 0), 0);
     const mediaCalculada = vinculo.nota.length > 0 ? (somaNotas / vinculo.nota.length).toFixed(1) : "-";
 
@@ -114,8 +134,13 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
       success: true,
       data: {
         nomeDisciplina: vinculo.disciplina.nome_disciplina,
+        // CORREÇÃO: vinculo.disciplina.professor
         professor: vinculo.disciplina.professor?.nome,
-        resumo: { media: mediaCalculada, faltas: totalFaltas, porcentagemFreq },
+        resumo: { 
+            media: mediaCalculada, 
+            faltas: totalFaltas, 
+            porcentagemFreq: porcentagemFreq // Adicionada a porcentagem que faltava no seu original
+        },
         notas: vinculo.nota.map(n => ({
           idnota: n.idnota, descricao: n.descricao, valor: n.valor, data: n.data
         })),
@@ -125,7 +150,7 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
       }
     };
   } catch (error) {
-    console.error("Erro ao buscar detalhes da disciplina:", error);
+    console.error("Erro getDetalhesDisciplinaAction:", error);
     return { success: false, error: "Erro interno ao carregar dados." };
   }
 }
