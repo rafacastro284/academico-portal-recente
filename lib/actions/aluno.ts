@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from "@/lib/prisma";
+import { cookies } from 'next/headers';
 
 export async function getDashboardAlunoAction(idAluno: number) {
   try {
@@ -68,12 +69,9 @@ export async function getDashboardAlunoAction(idAluno: number) {
     return { success: false, error: "Erro ao carregar dados." }; 
   }
 }
-// ... (Imports existentes: prisma, etc) ...
-import { cookies } from 'next/headers'; // Certifique-se que cookies está importado
 
 export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
   try {
-    // 1. Autenticação: Pegar ID do Aluno pelo Cookie
     const cookieStore = await cookies();
     const userIdCookie = cookieStore.get('portal_usuario_id');
     
@@ -82,26 +80,12 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
     }
     const idAluno = Number(userIdCookie.value);
 
-    // 2. Buscar o vínculo específico (Aluno <-> Disciplina)
-    // Usamos findFirst porque a chave primária da tabela é idalunodisciplina, 
-    // mas aqui estamos buscando pela combinação Aluno + Disciplina
     const vinculo = await prisma.alunodisciplina.findFirst({
-      where: {
-        idaluno: idAluno,
-        iddisciplina: idDisciplinaRaw
-      },
+      where: { idaluno: idAluno, iddisciplina: idDisciplinaRaw },
       include: {
-        disciplina: {
-          include: {
-            professor: { select: { nome: true } }
-          }
-        },
-        nota: {
-          orderBy: { data: 'desc' } // Notas mais recentes primeiro
-        },
-        frequencia: {
-          orderBy: { data: 'desc' } // Frequências mais recentes primeiro
-        }
+        disciplina: { include: { professor: { select: { nome: true } } } },
+        nota: { orderBy: { data: 'desc' } },
+        frequencia: { orderBy: { data: 'desc' } }
       }
     });
 
@@ -109,17 +93,11 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
       return { success: false, error: "Disciplina não encontrada ou você não está matriculado nela." };
     }
 
-    // 3. Cálculos Estatísticos
-    // A. Média
     const somaNotas = vinculo.nota.reduce((acc, n) => acc + Number(n.valor || 0), 0);
     const mediaCalculada = vinculo.nota.length > 0 ? (somaNotas / vinculo.nota.length).toFixed(1) : "-";
 
-    // B. Faltas Totais
     const totalFaltas = vinculo.frequencia.reduce((acc, f) => acc + (Number(f.faltas) || 0), 0);
 
-    // C. Porcentagem de Frequência
-    // Fórmula: 100% - ((Total Faltas / Carga Horária) * 100)
-    // Se não houver carga horária definida, assumimos 100% ou "-" para evitar erros
     const cargaHoraria = vinculo.disciplina.carga_horaria || 0;
     let porcentagemFreq = "100%";
     
@@ -127,11 +105,9 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
        const calc = 100 - ((totalFaltas / cargaHoraria) * 100);
        porcentagemFreq = `${calc.toFixed(0)}%`;
     } else if (totalFaltas > 0) {
-        porcentagemFreq = "Verif. Carga"; // Caso tenha faltas mas carga horária seja 0
+        porcentagemFreq = "Verif. Carga";
     }
 
-    // 4. Filtragem para exibição
-    // Geralmente na aba "Frequência" mostramos apenas os dias que tiveram faltas
     const frequenciasComFaltas = vinculo.frequencia.filter(f => (f.faltas || 0) > 0);
 
     return {
@@ -139,29 +115,15 @@ export async function getDetalhesDisciplinaAction(idDisciplinaRaw: number) {
       data: {
         nomeDisciplina: vinculo.disciplina.nome_disciplina,
         professor: vinculo.disciplina.professor?.nome,
-        
-        resumo: {
-          media: mediaCalculada,
-          faltas: totalFaltas,
-          porcentagemFreq: porcentagemFreq
-        },
-
-        // Mapeamos para tipos simples (o frontend fará a conversão de Data)
+        resumo: { media: mediaCalculada, faltas: totalFaltas, porcentagemFreq },
         notas: vinculo.nota.map(n => ({
-          idnota: n.idnota,
-          descricao: n.descricao,
-          valor: n.valor,
-          data: n.data
+          idnota: n.idnota, descricao: n.descricao, valor: n.valor, data: n.data
         })),
-
         frequencias: frequenciasComFaltas.map(f => ({
-          idfrequencia: f.idfrequencia,
-          data: f.data,
-          faltas: f.faltas
+          idfrequencia: f.idfrequencia, data: f.data, faltas: f.faltas
         }))
       }
     };
-
   } catch (error) {
     console.error("Erro ao buscar detalhes da disciplina:", error);
     return { success: false, error: "Erro interno ao carregar dados." };

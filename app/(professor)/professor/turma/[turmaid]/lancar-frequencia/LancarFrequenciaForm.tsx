@@ -1,135 +1,233 @@
 'use client';
 
 import React, { useState } from 'react';
-import styles from './LancarFrequencia.module.css'; 
-import { lancarFrequenciaAction } from '@/lib/actions'; // Importe a Server Action
+import { useRouter } from 'next/navigation';
+import styles from './LancarFrequencia.module.css';
+import { lancarFrequenciaAction, getDadosLancamentoFrequenciaListaAction } from '@/lib/actions/professor';
+
+interface AlunoFrequencia {
+  idAlunoDisciplina: number;
+  idAluno: number;
+  nome: string | null;  // ✅ CORRIGIDO: Aceita null
+  matricula: string | null;
+  statusAtual: 'P' | 'F' | 'N/A';
+}
 
 interface LancarFrequenciaFormProps {
-    alunoIdDisciplina: number;
-    disciplinaId: number;
-    statusInicial: 'P' | 'F' | 'N/A';
-    dataInicial: string; // Formato YYYY-MM-DD
+  turmaId: number;
+  disciplinaId: number;
+  alunosIniciais: AlunoFrequencia[];
+  dataInicial: string;
 }
 
 export default function LancarFrequenciaForm({
-    alunoIdDisciplina,
-    disciplinaId,
-    statusInicial,
-    dataInicial,
+  turmaId,
+  disciplinaId,
+  alunosIniciais,
+  dataInicial,
 }: LancarFrequenciaFormProps) {
+  const router = useRouter();
+  const [dataSelecionada, setDataSelecionada] = useState(dataInicial);
+  const [alunos, setAlunos] = useState(alunosIniciais);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  const carregarDadosDaData = async (data: string) => {
+    if (!data) return;
     
-    // Estado para a data selecionada e o status (P=Presente, F=Falta)
-    const [dataSelecionada, setDataSelecionada] = useState(dataInicial);
-    const [statusFrequencia, setStatusFrequencia] = useState<'P' | 'F'>(
-        statusInicial === 'F' ? 'F' : 'P' // Se não for 'F', assume 'P' para o rádio
+    setIsLoadingData(true);
+    setStatusMessage('');
+    
+    try {
+      const resultado = await getDadosLancamentoFrequenciaListaAction(
+        turmaId,
+        disciplinaId,
+        data
+      );
+      
+      if (resultado.success && resultado.data) {
+        setAlunos(resultado.data.alunos);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados da data:', error);
+      setStatusMessage('❌ Erro ao carregar dados da data selecionada.');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const handleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const novaData = e.target.value;
+    setDataSelecionada(novaData);
+    carregarDadosDaData(novaData);
+  };
+
+  const handleStatusChange = (idAlunoDisciplina: number, novoStatus: 'P' | 'F') => {
+    setAlunos(prev =>
+      prev.map(aluno =>
+        aluno.idAlunoDisciplina === idAlunoDisciplina
+          ? { ...aluno, statusAtual: novoStatus }
+          : aluno
+      )
     );
+  };
+
+  const handleMarcarTodosPresentes = () => {
+    setAlunos(prev => prev.map(aluno => ({ ...aluno, statusAtual: 'P' as const })));
+  };
+
+  const handleMarcarTodosFaltosos = () => {
+    setAlunos(prev => prev.map(aluno => ({ ...aluno, statusAtual: 'F' as const })));
+  };
+
+  const handleSalvar = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    const [isSaving, setIsSaving] = useState(false);
-    const [statusMessage, setStatusMessage] = useState('');
+    setIsSaving(true);
+    setStatusMessage('Salvando frequências...');
 
-    const handleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const novaData = e.target.value;
-        // 🎯 OBS: Se você quiser que o statusInicial mude quando o professor mudar a data, 
-        // você precisará de um useEffect para chamar o getDadosLancamentoFrequenciaAction 
-        // novamente. Por enquanto, a mudança de data apenas prepara o salvamento.
-        setDataSelecionada(novaData);
-        setStatusMessage('');
-    };
+    const registros = alunos.map(aluno => ({
+      idAlunoDisciplina: aluno.idAlunoDisciplina,
+      status: aluno.statusAtual === 'F' ? 'F' as const : 'P' as const
+    }));
 
-    const handleLancarFrequencia = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        setIsSaving(true);
-        setStatusMessage('Salvando frequência...');
+    try {
+      const resultado = await lancarFrequenciaAction({
+        disciplinaId: disciplinaId,
+        data: dataSelecionada,
+        registros: registros
+      });
 
-        // 🎯 A action de salvar frequência espera um array de registros (para lançar em lote).
-        // Aqui, lançamos apenas o registro deste aluno.
-        const dadosParaAcao = {
-            disciplinaId: disciplinaId,
-            data: dataSelecionada,
-            registros: [{ 
-                idAlunoDisciplina: alunoIdDisciplina, 
-                status: statusFrequencia 
-            }]
-        };
+      if (resultado.success) {
+        setStatusMessage(`✅ Frequências salvas com sucesso para ${dataSelecionada}!`);
+        setTimeout(() => {
+          router.push(`/professor/turma/${turmaId}/alunos?disciplina=${disciplinaId}`);
+        }, 1500);
+      } else {
+        setStatusMessage(`❌ Erro ao salvar: ${resultado.error || 'Erro interno.'}`);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar frequências:', error);
+      setStatusMessage('❌ Erro ao salvar frequências.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-        const resultado = await lancarFrequenciaAction(dadosParaAcao);
+  const contarPresencas = () => alunos.filter(a => a.statusAtual === 'P').length;
+  const contarFaltas = () => alunos.filter(a => a.statusAtual === 'F').length;
 
-        if (resultado.success) {
-            setStatusMessage(`✅ Frequência (${statusFrequencia === 'P' ? 'PRESENÇA' : 'FALTA'}) lançada com sucesso para ${dataSelecionada}!`);
-        } else {
-            setStatusMessage(`❌ Erro ao salvar: ${resultado.error || 'Erro interno.'}`);
-        }
-        
-        setIsSaving(false);
-    };
+  return (
+    <div className={styles.formContainer}>
+      <form onSubmit={handleSalvar}>
+        <div className={styles.filterBar}>
+          <div>
+            <label htmlFor="dataLancamento">Data do Registro:</label>
+            <input
+              type="date"
+              id="dataLancamento"
+              value={dataSelecionada}
+              onChange={handleDataChange}
+              required
+              disabled={isSaving || isLoadingData}
+            />
+          </div>
 
-    return (
-        <div className={styles.formContainer}>
-            
-            <h3 className={styles.sectionTitle}>Registro de Frequência</h3>
-
-            <form onSubmit={handleLancarFrequencia} className={styles.frequenciaForm}>
-                
-                {/* Campo de Data */}
-                <div className={styles.inputGroup}>
-                    <label htmlFor="dataLancamento">Data do Registro:</label>
-                    <input
-                        type="date"
-                        id="dataLancamento"
-                        name="dataLancamento"
-                        value={dataSelecionada}
-                        onChange={handleDataChange}
-                        required
-                        className={styles.inputField}
-                        disabled={isSaving}
-                    />
-                </div>
-                
-                {/* Status Inicial do Dia */}
-                <p className={styles.statusInfo}>
-                    Status Inicial: 
-                    <span className={statusInicial === 'F' ? styles.statusFalta : styles.statusPresenca}>
-                        {statusInicial === 'F' ? ' FALTA' : statusInicial === 'P' ? ' PRESENÇA' : ' N/A (Não Lançado)'}
-                    </span>
-                </p>
-
-                {/* Opções de Frequência */}
-                <div className={styles.radioGroup}>
-                    <label>
-                        <input
-                            type="radio"
-                            name="status"
-                            value="P"
-                            checked={statusFrequencia === 'P'}
-                            onChange={() => setStatusFrequencia('P')}
-                            disabled={isSaving}
-                        />
-                        Presente (0 Faltas)
-                    </label>
-                    <label>
-                        <input
-                            type="radio"
-                            name="status"
-                            value="F"
-                            checked={statusFrequencia === 'F'}
-                            onChange={() => setStatusFrequencia('F')}
-                            disabled={isSaving}
-                        />
-                        Falta (1 Falta)
-                    </label>
-                </div>
-                
-                <button 
-                    type="submit" 
-                    className={styles.saveButton}
-                    disabled={isSaving}
-                >
-                    {isSaving ? 'Salvando...' : 'Registrar Frequência'}
-                </button>
-            </form>
-
-            {statusMessage && <p className={styles.status}>{statusMessage}</p>}
+          <div className={styles.quickActions}>
+            <button 
+              type="button" 
+              onClick={handleMarcarTodosPresentes}
+              className={styles.btnPresentes}
+              disabled={isSaving || isLoadingData}
+            >
+              Marcar Todos Presentes
+            </button>
+            <button 
+              type="button" 
+              onClick={handleMarcarTodosFaltosos}
+              className={styles.btnFaltas}
+              disabled={isSaving || isLoadingData}
+            >
+              Marcar Todos Faltosos
+            </button>
+          </div>
         </div>
-    );
+
+        <div className={styles.resumo}>
+          <p><strong>Presenças:</strong> {contarPresencas()}</p>
+          <p><strong>Faltas:</strong> {contarFaltas()}</p>
+          <p><strong>Total de Alunos:</strong> {alunos.length}</p>
+        </div>
+
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Matrícula</th>
+              <th>Nome do Aluno</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {alunos.map((aluno) => (
+              <tr key={aluno.idAlunoDisciplina}>
+                <td>{aluno.matricula || 'N/A'}</td>
+                <td>{aluno.nome || 'Aluno Sem Nome'}</td>
+                <td>
+                  <div className={styles.radioGroup}>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name={`status-${aluno.idAlunoDisciplina}`}
+                        value="P"
+                        checked={aluno.statusAtual === 'P'}
+                        onChange={() => handleStatusChange(aluno.idAlunoDisciplina, 'P')}
+                        disabled={isSaving || isLoadingData}
+                      />
+                      <span>Presente</span>
+                    </label>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name={`status-${aluno.idAlunoDisciplina}`}
+                        value="F"
+                        checked={aluno.statusAtual === 'F'}
+                        onChange={() => handleStatusChange(aluno.idAlunoDisciplina, 'F')}
+                        disabled={isSaving || isLoadingData}
+                      />
+                      <span>Falta</span>
+                    </label>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className={styles.actionButtons}>
+          <button 
+            type="button"
+            onClick={() => router.back()}
+            className={styles.cancelButton}
+            disabled={isSaving}
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            className={styles.saveButton}
+            disabled={isSaving || isLoadingData}
+          >
+            {isSaving ? 'Salvando...' : 'Salvar Frequências'}
+          </button>
+        </div>
+      </form>
+
+      {statusMessage && (
+        <p className={`${styles.status} ${statusMessage.includes('✅') ? styles.success : styles.error}`}>
+          {statusMessage}
+        </p>
+      )}
+    </div>
+  );
 }

@@ -67,6 +67,13 @@
   box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
 }
 
+.inputGroup input:disabled,
+.inputGroup select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .submitButton {
   width: 100%;
   padding: 0.9rem;
@@ -80,15 +87,36 @@
   transition: background-color 0.2s;
   margin-top: 1rem;
 }
-.submitButton:hover {
+
+.submitButton:hover:not(:disabled) {
   background-color: #303f9f; 
+}
+
+.submitButton:disabled {
+  background-color: #9fa8da;
+  cursor: not-allowed;
 }
 
 .successMessage {
   text-align: center;
-  color: green;
+  color: #2e7d32;
   font-weight: 500;
   margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #e8f5e9;
+  border-radius: 6px;
+  border-left: 4px solid #4caf50;
+}
+
+.errorMessage {
+  text-align: center;
+  color: #c62828;
+  font-weight: 500;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #ffebee;
+  border-radius: 6px;
+  border-left: 4px solid #f44336;
 }
 
 .studentSectionTitle {
@@ -109,6 +137,18 @@
   border-radius: 8px;
   margin-bottom: 1rem;
   box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.searchBar:focus {
+  outline: none;
+  border-color: #3f51b5;
+  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+}
+
+.searchBar:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
 }
 
 .studentListContainer {
@@ -126,10 +166,13 @@
   padding: 0.9rem 1rem;
   border-bottom: 1px solid #e2e8f0;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
+
 .studentItem:last-child {
   border-bottom: none;
 }
+
 .studentItem:hover {
   background-color: #f8fafc;
 }
@@ -140,8 +183,13 @@
   cursor: pointer;
 }
 
+.studentItem input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
 .studentItem label {
   font-size: 0.95rem;
   color: #2d3748;
   cursor: pointer;
+  flex: 1;
 }

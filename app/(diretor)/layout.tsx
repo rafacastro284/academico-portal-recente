@@ -84,14 +84,6 @@ export default async function DiretorLayout({
               <p>Turmas</p>
             </div>
           </div>
-
-          <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper} style={{backgroundColor: '#f3e8ff'}}><IconMedia /></div>
-            <div>
-              <strong>{stats.mediaGeral}</strong>
-              <p>Média Geral</p>
-            </div>
-          </div>
         </div>
 
         {children}

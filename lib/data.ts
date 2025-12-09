@@ -1,7 +1,4 @@
-// lib/data.ts
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 
 export async function createUsuario(data: {
   cpf?: string;
@@ -11,9 +8,7 @@ export async function createUsuario(data: {
   senha?: string;
   tipo: "aluno" | "professor" | "secretario" | "admin";
 }) {
-  return await prisma.usuario.create({
-    data,
-  });
+  return await prisma.usuario.create({ data });
 }
 
 export async function getUsuarios() {

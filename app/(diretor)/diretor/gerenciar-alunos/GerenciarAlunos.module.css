@@ -1,0 +1,264 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.backButton {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.backButton:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+.filterBar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.filterGroup label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.filterGroup select,
+.filterGroup input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background-color: white;
+  transition: border-color 0.2s;
+}
+
+.filterGroup select:focus,
+.filterGroup input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.table th {
+  background-color: #f3f4f6;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.table tr:hover {
+  background-color: #f9fafb;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tagAtivo {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.tagInativo {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.frequenciaContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.frequenciaBar {
+  flex: 1;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.frequenciaFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.frequenciaText {
+  font-weight: bold;
+  font-size: 0.85rem;
+  min-width: 45px;
+  text-align: right;
+}
+
+.turmasList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.turmaTag {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.moreTurmas {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-style: italic;
+  align-self: center;
+}
+
+.alunoCount {
+  background-color: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.emptyState h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #4b5563;
+}
+
+.emptyState p {
+  font-size: 0.9rem;
+}
+
+.loadingState {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.loadingState p {
+  margin-top: 10px;
+}
+
+/* Cores para diferentes níveis de frequência */
+.frequenciaAlta {
+  background-color: #10b981;
+}
+
+.frequenciaMedia {
+  background-color: #f59e0b;
+}
+
+.frequenciaBaixa {
+  background-color: #ef4444;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .filterBar {
+    flex-direction: column;
+    gap: 15px;
+    padding: 12px;
+  }
+  
+  .filterGroup {
+    min-width: 100%;
+  }
+  
+  .tableWrapper {
+    border-radius: 6px;
+    margin: 0 -15px;
+    width: calc(100% + 30px);
+  }
+  
+  .table {
+    font-size: 0.85rem;
+    min-width: 700px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px 12px;
+  }
+  
+  .frequenciaContainer {
+    min-width: 100px;
+  }
+  
+  .frequenciaText {
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
+  
+  .tag {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+}

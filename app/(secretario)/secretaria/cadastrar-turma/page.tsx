@@ -27,7 +27,6 @@ export default function CadastrarTurma() {
   const [turno, setTurno] = useState('');
   const [disciplinaId, setDisciplinaId] = useState(''); 
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear().toString());
-  // 👇 O estado já existia aqui
   const [limiteVagas, setLimiteVagas] = useState('30'); 
   
   // Estados de dados e UI
@@ -44,12 +43,16 @@ export default function CadastrarTurma() {
   useEffect(() => {
     async function loadData() {
       const res = await getDadosCadastroTurmaAction();
-      if (res.success) {
-        setDbAlunos(res.alunos || []);
-        setDbDisciplinas(res.disciplinas || []);
+      
+      // Corrigido: verificação de tipo adequada
+      if (res.success && res.data) {
+        // Acessar alunos e disciplinas através de res.data
+        setDbAlunos(res.data.alunos || []);
+        setDbDisciplinas(res.data.disciplinas || []);
       } else {
-        setMessage("Erro ao carregar listas do sistema.");
+        setMessage(res.error || "Erro ao carregar listas do sistema.");
       }
+      
       setLoading(false);
     }
     loadData();
@@ -76,7 +79,8 @@ export default function CadastrarTurma() {
     setMessage('');
     
     if (!nomeTurma) { 
-        alert("Preencha o nome da turma"); return;
+        alert("Preencha o nome da turma"); 
+        return;
     }
 
     const response = await cadastrarTurmaAction({
@@ -144,7 +148,6 @@ export default function CadastrarTurma() {
             <option value="" disabled>Selecione o turno</option>
             <option value="Manhã">Manhã</option>
             <option value="Tarde">Tarde</option>
-            <option value="Noite">Noite</option>
           </select>
         </div>
 
@@ -173,7 +176,7 @@ export default function CadastrarTurma() {
           />
         </div>
 
-        {/* 👇 ADICIONADO: Campo de Limite de Vagas */}
+        {/* Campo de Limite de Vagas */}
         <div className={styles.inputGroup}>
           <label htmlFor="limiteVagas">Limite de Vagas</label>
           <input

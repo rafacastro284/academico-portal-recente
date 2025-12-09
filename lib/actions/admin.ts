@@ -5,7 +5,6 @@ import { tipo_usuario } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import bcrypt from 'bcryptjs';
 
-// Interface para evitar 'any'
 interface DadosUsuarioInput {
   nome: string;
   cpf: string;
@@ -61,7 +60,6 @@ export async function atualizarUsuarioAction(id: number, dados: DadosUsuarioInpu
 
 export async function excluirUsuarioAction(id: number) {
   try {
-    // Remove vínculos antes de deletar o usuário
     await prisma.matriculaturma.deleteMany({ where: { idusuario: id } });
     await prisma.alunodisciplina.deleteMany({ where: { idaluno: id } });
     await prisma.usuario.delete({ where: { idusuario: id } });

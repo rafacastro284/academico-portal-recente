@@ -109,14 +109,6 @@ export default function EditUsuario() {
       <div className={styles.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <h1 className={styles.formTitle}>Editar Usuário</h1>
-           <button 
-             type="button" 
-             onClick={handleDelete}
-             disabled={isDeleting}
-             style={{ backgroundColor: '#ff4444', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer' }}
-           >
-             {isDeleting ? 'Excluindo...' : '🗑️ Excluir Usuário'}
-           </button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>

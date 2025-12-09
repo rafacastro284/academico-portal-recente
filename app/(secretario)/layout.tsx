@@ -48,20 +48,6 @@ export default function SecretarioLayout({
               <p>Total de Professores</p>
             </div>
           </div>
-          <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconTurma /></div>
-            <div>
-              <strong>{adminUserData.summary.diretores}</strong> 
-              <p>Total de Diretores</p>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <div className={styles.iconWrapper}><IconAdmin /></div>
-            <div>
-              <strong>{summary.administradores}</strong>
-              <p>Total de Administradores</p>
-            </div>
-          </div>
         </div>
 
         {children}

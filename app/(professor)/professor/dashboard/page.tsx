@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getDashboardProfessorAction } from '@/lib/actions';
+import { getDashboardProfessorAction } from '@/lib/actions/professor';
 import styles from './ProfessorDashboard.module.css';
 
 export default async function ProfessorDashboard() {

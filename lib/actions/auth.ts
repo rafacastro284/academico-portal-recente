@@ -39,3 +39,13 @@ export async function loginAction(dados: { cpf: string; senha: string }) {
     return { success: false, error: "Erro interno." }; 
   }
 }
+
+export async function logoutAction() {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete('portal_usuario_id');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Erro ao fazer logout." };
+  }
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './GerenciarProfessores.module.css';
-import { listarProfessoresAction } from '@/lib/actions/secretaria';
+import { listarProfessoresComDisciplinasAction } from '@/lib/actions/diretoria';
 
 interface Professor {
   idusuario: number;
@@ -11,11 +11,13 @@ interface Professor {
   cpf?: string;
   matricula?: string;
   email?: string;
-  status: string;
-  disciplina?: string;
+  disciplinas: string[];
+  turmas: string[];
+  totalDisciplinas: number;
+  totalTurmas: number;
 }
 
-export default function GerenciarProfessores() {
+export default function GerenciarProfessoresDiretor() {
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [loading, setLoading] = useState(true);
   const [disciplinaSel, setDisciplinaSel] = useState('todas');
@@ -27,10 +29,23 @@ export default function GerenciarProfessores() {
       try {
         setLoading(true);
         
-        const response = await listarProfessoresAction();
+        const response = await listarProfessoresComDisciplinasAction();
         
         if (response.success && response.data) {
-          setProfessores(response.data);
+          // Formatar os dados corretamente
+          const professoresFormatados: Professor[] = response.data.map((prof: any) => ({
+            idusuario: prof.idusuario,
+            nome: prof.nome || 'Sem nome',
+            cpf: prof.cpf || undefined,
+            matricula: prof.matricula || undefined,
+            email: prof.email || undefined,
+            disciplinas: prof.disciplinas || [],
+            turmas: prof.turmas || [],
+            totalDisciplinas: prof.totalDisciplinas || 0,
+            totalTurmas: prof.totalTurmas || 0
+          }));
+          
+          setProfessores(professoresFormatados);
         } else {
           console.error('Erro ao carregar professores:', response.error);
           setProfessores([]);
@@ -50,18 +65,23 @@ export default function GerenciarProfessores() {
   const filteredProfessores = professores
     .filter(prof => {
       const porDisciplina = disciplinaSel === 'todas' || 
-                           (prof.disciplina && prof.disciplina === disciplinaSel);
+                           prof.disciplinas.some(disc => disc === disciplinaSel);
       const porBusca = busca === '' ||
                        prof.nome.toLowerCase().includes(busca.toLowerCase()) ||
                        (prof.matricula && prof.matricula.toLowerCase().includes(busca.toLowerCase())) ||
-                       (prof.cpf && prof.cpf.includes(busca));
+                       (prof.cpf && prof.cpf.includes(busca)) ||
+                       prof.disciplinas.some(disc => 
+                         disc.toLowerCase().includes(busca.toLowerCase())
+                       );
       
       return porDisciplina && porBusca;
     })
     .sort((a, b) => a.nome.localeCompare(b.nome));
 
   // Extrair disciplinas únicas
-  const disciplinasUnicas = [...new Set(professores.map(p => p.disciplina).filter(Boolean))].sort();
+  const disciplinasUnicas = [...new Set(
+    professores.flatMap(p => p.disciplinas)
+  )].filter(Boolean).sort();
 
   if (loading) {
     return (
@@ -73,7 +93,7 @@ export default function GerenciarProfessores() {
 
   return (
     <div className={styles.container}>
-      <Link href="/secretaria/dashboard" className={styles.backButton}>
+      <Link href="/diretor/dashboard" className={styles.backButton}>
         ← Voltar ao Dashboard
       </Link>
 
@@ -91,7 +111,7 @@ export default function GerenciarProfessores() {
           </select>
         </div>
         <div>
-          <label htmlFor="busca">Buscar por Nome, CPF ou Matrícula:</label>
+          <label htmlFor="busca">Buscar por Nome, CPF, Matrícula ou Disciplina:</label>
           <input 
             type="text" 
             id="busca"
@@ -107,9 +127,10 @@ export default function GerenciarProfessores() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Nome</th>
+              <th>Professor</th>
               <th>CPF</th>
-              <th>Disciplina Principal</th>
+              <th>Disciplinas</th>
+              <th>Turmas</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -123,17 +144,57 @@ export default function GerenciarProfessores() {
             ) : (
               filteredProfessores.map((prof) => (
                 <tr key={prof.idusuario}>
-                  <td><strong>{prof.nome}</strong></td>
-                  <td>{prof.cpf || 'Não informado'}</td>
-                  <td>{prof.disciplina || 'Não informado'}</td>
                   <td>
-                    <span className={`${styles.tag} ${
-                      prof.status === 'ATIVO' ? styles.tagAtivo : 
-                      prof.status === 'LICENCA' ? styles.tagLicenca : 
-                      styles.tagInativo
-                    }`}>
-                      {prof.status === 'ATIVO' ? 'Ativo' : 
-                       prof.status === 'LICENCA' ? 'Licença' : 'Inativo'}
+                    <div className={styles.professorInfo}>
+                      <strong>{prof.nome}</strong>
+                    </div>
+                  </td>
+                  <td>{prof.cpf || 'Não informado'}</td>
+                  <td>
+                    {prof.disciplinas.length > 0 ? (
+                      <div className={styles.disciplinasList}>
+                        {prof.disciplinas.slice(0, 2).map((disc, index) => (
+                          <span key={index} className={styles.disciplinaTag}>
+                            {disc}
+                          </span>
+                        ))}
+                        {prof.disciplinas.length > 2 && (
+                          <span className={styles.moreItems}>
+                            +{prof.disciplinas.length - 2} mais
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={styles.semDisciplinas}>Sem disciplinas</span>
+                    )}
+                    <div className={styles.totalBadge}>
+                      {prof.totalDisciplinas} disciplina{prof.totalDisciplinas !== 1 ? 's' : ''}
+                    </div>
+                  </td>
+                  <td>
+                    {prof.turmas.length > 0 ? (
+                      <div className={styles.turmasList}>
+                        {prof.turmas.slice(0, 2).map((turma, index) => (
+                          <span key={index} className={styles.turmaTag}>
+                            {turma}
+                          </span>
+                        ))}
+                        {prof.turmas.length > 2 && (
+                          <span className={styles.moreItems}>
+                            +{prof.turmas.length - 2} mais
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={styles.semTurmas}>Sem turmas</span>
+                    )}
+                    <div className={styles.totalBadge}>
+                      {prof.totalTurmas} turma{prof.totalTurmas !== 1 ? 's' : ''}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`${styles.tag} ${styles.tagAtivo}`}>
+                      Ativo
                     </span>
                   </td>
                 </tr>

@@ -1,79 +1,187 @@
-.filterBar {
-  display: flex;
-  justify-content: flex-start; 
-  align-items: flex-end; 
-  gap: 1.5rem;
-  background-color: #f8fafc;
+.container {
+  width: 100%;
+}
+
+.pageTitle {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #1a202c;
+  font-size: 1.8rem;
+}
+
+.headerInfo {
+  background-color: #f7fafc;
   padding: 1rem 1.5rem;
   border-radius: 8px;
   margin-bottom: 2rem;
-}
-.filterBar div {
-  display: flex;
-  flex-direction: column;
-}
-.filterBar label {
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: #4a5568;
-}
-.filterBar select {
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #cbd5e0;
-  min-width: 150px;
+  border-left: 4px solid #805ad5;
 }
 
-.saveButton {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-  margin-left: auto; 
+.headerInfo p {
+  margin: 0.3rem 0;
+  color: #2d3748;
 }
-.saveButton:hover { background-color: #0056b3; }
 
+.formContainer {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
 
 .sectionTitle {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  color: #333;
+  color: #2d3748;
+  font-size: 1.3rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.notaForm {
+  background-color: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: #805ad5;
+  box-shadow: 0 0 0 3px rgba(128, 90, 213, 0.1);
+}
+
+.inputField:disabled {
+  background-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background-color: #e2e8f0;
+  color: #2d3748;
+}
+.cancelButton:hover {
+  background-color: #cbd5e0;
+}
+
+.saveButton {
+  background-color: #805ad5;
+  color: white;
+}
+.saveButton:hover {
+  background-color: #6b46c1;
+}
+
+.saveButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.success {
+  background-color: #c6f6d5;
+  color: #22543d;
+}
+
+.error {
+  background-color: #fed7d7;
+  color: #742a2a;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #718096;
+  padding: 2rem;
+  background-color: #f7fafc;
+  border-radius: 8px;
+  font-style: italic;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-.table th, .table td {
+
+.table th,
+.table td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
 }
+
 .table th {
-  background-color: #374151;
+  background-color: #2d3748;
   color: white;
-}
-
-.notaInput {
-  width: 80px; 
-  padding: 0.5rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.statusTag {
-  padding: 0.25rem 0.75rem;
-  border-radius: 99px;
   font-weight: 600;
-  font-size: 0.8rem;
-  display: inline-block;
+  text-transform: uppercase;
+  font-size: 0.85rem;
 }
 
-.statusLancada { background-color: #c6f6d5; color: #2f855a; } 
-.statusPendente { background-color: #fefcbf; color: #b45309; } 
+.table tbody tr:hover {
+  background-color: #f7fafc;
+}
+
+.deleteButton {
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.deleteButton:hover {
+  background-color: #c53030;
+}

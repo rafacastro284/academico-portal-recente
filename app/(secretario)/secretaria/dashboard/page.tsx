@@ -43,30 +43,6 @@ export default function SecretarioDashboard() {
             <p>Editar ou excluir turmas existentes</p>
           </Link>
 
-          <Link href="/secretaria/documentos" className={styles.navCard}>
-            {/* ... Gerar Documentos ... */}
-            <div className={styles.iconWrapper}><IconDocumento /></div>
-            <h3>Gerar Documentos</h3>
-            <p>Emitir atestados, declarações e relatórios</p>
-          </Link>
-
-          {/* --- CORREÇÃO AQUI ---
-            O href estava "/secretaria/grade-horaria"
-            Corrigido para "/secretaria/horarios" para bater com a pasta que criamos.
-          */}
-          <Link href="/secretaria/horarios" className={styles.navCard}>
-            {/* ... Montar Grade Horária ... */}
-            <div className={styles.iconWrapper}><IconHorario /></div>
-            <h3>Montar Grade Horária</h3>
-            <p>Organizar os horários das turmas e professores</p>
-          </Link>
-          <Link href="/secretaria/cadastra-usuario" className={styles.navCard}>
-            {/* ... Cadastrar Usuário ... */}
-            <div className={styles.iconWrapper}><IconCadastrarUsuario /></div>
-            <h3>Cadastrar Usuário</h3>
-            <p>Cadastrar Usuários</p>
-          </Link>
-
         </div>
       </div>
     </div>

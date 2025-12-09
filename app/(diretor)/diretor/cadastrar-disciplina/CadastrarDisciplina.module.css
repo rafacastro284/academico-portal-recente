@@ -68,11 +68,6 @@
   box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
 }
 
-.inputGroup input[type="number"] {
-  text-align: right;
-  font-weight: 600;
-}
-
 .submitButton {
   width: 100%;
   padding: 0.9rem;
@@ -98,7 +93,22 @@
 
 .successMessage {
   text-align: center;
-  color: green;
+  color: #059669;
   font-weight: 500;
   margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #d1fae5;
+  border-radius: 6px;
+  border: 1px solid #10b981;
+}
+
+.errorMessage {
+  text-align: center;
+  color: #dc2626;
+  font-weight: 500;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #fee2e2;
+  border-radius: 6px;
+  border: 1px solid #f87171;
 }

@@ -4,25 +4,29 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "./GerenciarAlunos.module.css";
 // Importamos as Actions reais
-import { listarAlunosComTurmaAction, listarTurmasAction } from "@/lib/actions/secretaria";
+import { listarAlunosComTurmaEAcoesAction } from "@/lib/actions/diretoria";
 
-interface AlunoFormatado {
+interface AlunoComFrequencia {
   id: number;
   nome: string;
   matricula: string;
   serie: string;
   turma: string;
   status: string;
+  frequenciaMedia: number;
+  totalPresencas: number;
+  totalFaltas: number;
 }
 
-export default function GerenciarAlunos() {
-  const [alunos, setAlunos] = useState<AlunoFormatado[]>([]);
+export default function GerenciarAlunosDiretor() {
+  const [alunos, setAlunos] = useState<AlunoComFrequencia[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Estados para Filtros
   const [serieSel, setSerieSel] = useState("todas");
   const [turmaSel, setTurmaSel] = useState("todas");
   const [busca, setBusca] = useState("");
+  const [frequenciaMin, setFrequenciaMin] = useState("0");
 
   // Estados para preencher os <select> dinamicamente
   const [opcoesTurmas, setOpcoesTurmas] = useState<string[]>([]);
@@ -34,29 +38,18 @@ export default function GerenciarAlunos() {
       try {
         setLoading(true);
         
-        // 1. Busca Alunos
-        const resAlunos = await listarAlunosComTurmaAction();
+        // Busca Alunos com frequência
+        const resAlunos = await listarAlunosComTurmaEAcoesAction();
         
-        // 2. Busca Turmas (para o filtro)
-        const resTurmas = await listarTurmasAction();
-
         if (resAlunos.success && resAlunos.data) {
-          setAlunos(resAlunos.data);
-        }
-
-        if (resTurmas.success && resTurmas.data) {
-          // Extrai nomes de turmas únicos e séries únicas para os filtros
-          // Corrigido: usando 'nome' ao invés de 'nome_turma' conforme o tipo retornado
-          const nomesTurmas = Array.from(
-            new Set(resTurmas.data.map(t => t.nome || ""))
-          ).filter(Boolean);
+          setAlunos(resAlunos.data.alunos || []);
           
-          const nomesSeries = Array.from(
-            new Set(resTurmas.data.map(t => t.serie || ""))
-          ).filter(Boolean);
+          // Extrair turmas e séries únicas
+          const turmasUnicas = Array.from(new Set(resAlunos.data.alunos.map(a => a.turma))).filter(Boolean);
+          const seriesUnicas = Array.from(new Set(resAlunos.data.alunos.map(a => a.serie))).filter(Boolean);
           
-          setOpcoesTurmas(nomesTurmas.sort());
-          setOpcoesSeries(nomesSeries.sort());
+          setOpcoesTurmas(turmasUnicas.sort());
+          setOpcoesSeries(seriesUnicas.sort());
         }
 
       } catch (error) {
@@ -69,7 +62,7 @@ export default function GerenciarAlunos() {
     carregar();
   }, []);
 
-  // Lógica de Filtragem (Client-side)
+  // Lógica de Filtragem
   const filteredAlunos = alunos
     .filter((aluno) => {
       const porSerie = serieSel === "todas" || aluno.serie === serieSel;
@@ -79,15 +72,24 @@ export default function GerenciarAlunos() {
         busca === "" ||
         aluno.nome.toLowerCase().includes(termo) ||
         aluno.matricula.toLowerCase().includes(termo);
+      
+      const frequenciaMinNum = parseInt(frequenciaMin) || 0;
+      const porFrequencia = aluno.frequenciaMedia >= frequenciaMinNum;
 
-      return porSerie && porTurma && porBusca;
+      return porSerie && porTurma && porBusca && porFrequencia;
     });
+
+  const getFrequenciaColor = (frequencia: number) => {
+    if (frequencia >= 90) return '#10b981'; // Verde
+    if (frequencia >= 75) return '#f59e0b'; // Amarelo/Laranja
+    return '#ef4444'; // Vermelho
+  };
 
   if (loading) return <div className={styles.container}><p>Carregando lista de alunos...</p></div>;
 
   return (
     <div className={styles.container}>
-      <Link href="/secretaria/dashboard" className={styles.backButton}>
+      <Link href="/diretor/dashboard" className={styles.backButton}>
         &larr; Voltar ao Dashboard
       </Link>
 
@@ -110,7 +112,7 @@ export default function GerenciarAlunos() {
             {opcoesSeries.map((serie) => (
               <option key={serie} value={serie}>{serie}</option>
             ))}
-            <option value="-">Sem Série (Não Matriculado)</option>
+            <option value="-">Sem Série</option>
           </select>
         </div>
 
@@ -137,6 +139,7 @@ export default function GerenciarAlunos() {
               <th>Matrícula</th>
               <th>Série</th>
               <th>Turma</th>
+              <th>Frequência Média</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -144,7 +147,7 @@ export default function GerenciarAlunos() {
           <tbody>
             {filteredAlunos.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: "center", padding: "20px" }}>
+                <td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>
                   Nenhum aluno encontrado com esses filtros.
                 </td>
               </tr>
@@ -155,6 +158,22 @@ export default function GerenciarAlunos() {
                   <td>{aluno.matricula}</td>
                   <td>{aluno.serie}</td>
                   <td>{aluno.turma}</td>
+                  <td>
+                    <div className={styles.frequenciaContainer}>
+                      <div className={styles.frequenciaBar}>
+                        <div 
+                          className={styles.frequenciaFill}
+                          style={{
+                            width: `${aluno.frequenciaMedia}%`,
+                            backgroundColor: getFrequenciaColor(aluno.frequenciaMedia)
+                          }}
+                        ></div>
+                      </div>
+                      <span className={styles.frequenciaText}>
+                        {aluno.frequenciaMedia.toFixed(1)}%
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     <span
                       className={`${styles.tag} ${
@@ -179,10 +198,6 @@ export default function GerenciarAlunos() {
             )}
           </tbody>
         </table>
-      </div>
-      
-      <div style={{ marginTop: '10px', fontSize: '0.85rem', color: '#666', textAlign: 'right' }}>
-        Total de alunos listados: {filteredAlunos.length}
       </div>
     </div>
   );

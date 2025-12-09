@@ -284,10 +284,6 @@ export default function CadastrarUsuario() {
                   ))}
                 </select>
               </div>
-              <div className={styles.formGroup}>
-                <label>Formação Acadêmica</label>
-                <input type="text" value={formacaoAcademica} onChange={(e) => setFormacaoAcademica(e.target.value)} />
-              </div>
             </>
           )}
 
